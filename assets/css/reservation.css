@@ -1,0 +1,311 @@
+/* ==================================================
+   Styles Premium pour le formulaire de réservation
+   ================================================== */
+
+/* Conteneur principal du formulaire */
+.reservation-form-container {
+    max-width: 800px;
+    margin: 40px auto 80px auto;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    padding: 45px 50px;
+    border: 1px solid #f0f0f0;
+}
+
+/* Base du formulaire */
+.clean-form {
+    width: 100%;
+}
+
+.form-row {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 25px;
+}
+
+.form-field {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.full-width {
+    flex-basis: 100%;
+}
+
+label {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 500;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+select,
+textarea {
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 1rem;
+    background: #fdfdfd;
+    color: #333;
+    transition: all 0.2s ease-in-out;
+    font-family: 'Poppins', sans-serif;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+select:focus,
+textarea:focus {
+    border-color: #b5a692;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(181, 166, 146, 0.1);
+}
+
+select:disabled {
+    background: #f5f5f5;
+    color: #aaa;
+}
+
+textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* --- Section des horaires --- */
+.time-availability {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.time-slot {
+    padding: 12px 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background-color: #fff;
+    font-weight: 500;
+    color: #333;
+}
+
+.time-slot.selectable:hover {
+    border-color: #a39483;
+    color: #a39483;
+}
+
+.time-slot.selected {
+    background-color: #b5a692;
+    color: #ffffff;
+    border-color: #b5a692;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.time-slot.selected .time-value,
+.time-slot.selected .availability-badge {
+    color: #ffffff;
+    opacity: 1;
+}
+
+.time-slot.not-selectable {
+    background-color: #f5f5f5;
+    color: #bbb;
+    cursor: not-allowed;
+    border-color: #eee;
+}
+
+.time-slot .time-value {
+    display: block;
+    font-size: 1.1rem;
+}
+
+.time-slot .availability-badge {
+    display: block;
+    font-size: 0.8rem;
+    margin-top: 4px;
+    opacity: 0.8;
+}
+
+.info-state, .loading-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+    color: #777;
+    font-size: 0.95rem;
+}
+
+/* --- Cases à cocher personnalisées --- */
+.form-checkboxes {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #f0f0f0;
+}
+.checkbox-label {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #444;
+    user-select: none;
+}
+.checkbox-label input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 22px;
+    width: 22px;
+    background-color: #eee;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+.checkbox-label:hover input ~ .checkmark {
+    background-color: #ccc;
+}
+.checkbox-label input:checked ~ .checkmark {
+    background-color: #b5a692;
+}
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+.checkbox-label input:checked ~ .checkmark:after {
+    display: block;
+}
+.checkbox-label .checkmark:after {
+    left: 8px;
+    top: 4px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+}
+.consent-info {
+    font-size: 0.85rem;
+    color: #777;
+    margin: -5px 0 15px 35px;
+}
+
+/* --- Bouton de soumission --- */
+.reserve-btn {
+    width: 100%;
+    background: #b5a692;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 16px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-top: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.reserve-btn:hover:not(:disabled) {
+    background: #a39483;
+    box-shadow: 0 4px 15px rgba(181, 166, 146, 0.4);
+}
+.reserve-btn:disabled {
+    background: #e0e0e0;
+    cursor: not-allowed;
+}
+
+/* Champ honeypot anti-spam (doit TOUJOURS être caché) */
+.form-group-hidden {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+/* --- Textes d'aide --- */
+.reservation-extra-info, .gdpr-notice {
+    font-size: 0.9rem;
+    color: #777;
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+.gdpr-notice {
+    text-align: center;
+    margin-top: 20px;
+}
+.gdpr-notice a {
+    color: #b5a692;
+    text-decoration: none;
+}
+.gdpr-notice a:hover {
+    text-decoration: underline;
+}
+.required {
+    color: #c00;
+}
+
+/* ==================================================
+   Styles responsives pour le formulaire
+   ================================================== */
+
+@media (max-width: 768px) {
+    .reservation-form-container {
+        padding: 30px 25px;
+        margin: 20px auto 60px auto;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 0; /* On retire le gap pour gérer les marges par champ */
+        margin-bottom: 0;
+    }
+
+    .form-field {
+        margin-bottom: 25px;
+    }
+
+    .time-availability {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 8px;
+    }
+
+    .reserve-btn {
+        padding: 16px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .reservation-form-container {
+        padding: 20px 15px;
+        margin-top: 15px;
+        border: none;
+        box-shadow: none;
+    }
+
+    .time-availability {
+        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    }
+}

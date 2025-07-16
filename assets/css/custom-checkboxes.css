@@ -1,0 +1,240 @@
+/**
+ * Personnalisation des cases à cocher pour Le Margo
+ * Ces styles appliquent la direction artistique du site aux checkboxes
+ */
+
+/* Style de base pour masquer la checkbox native */
+input[type="checkbox"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-beige-dark);
+    background-color: var(--color-white);
+    border-radius: 0;
+    margin-right: 8px;
+    position: relative;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+/* État hover */
+input[type="checkbox"]:hover {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 3px rgba(181, 166, 146, 0.3);
+}
+
+/* État focus pour l'accessibilité */
+input[type="checkbox"]:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 2px rgba(181, 166, 146, 0.4);
+}
+
+/* État checked - affiche une coche stylisée */
+input[type="checkbox"]:checked {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+}
+
+/* Création de la coche personnalisée */
+input[type="checkbox"]:checked::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Style pour les labels accompagnant les checkboxes */
+label {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 400;
+    color: var(--color-primary);
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+label:hover {
+    color: var(--color-secondary);
+}
+
+/* Style pour les checkboxes désactivées */
+input[type="checkbox"]:disabled {
+    background-color: var(--color-beige-light);
+    border-color: var(--color-beige-dark);
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Conteneur de checkbox avec espacement */
+.checkbox-container {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+}
+
+/* Style spécifique pour les cases à cocher dans le formulaire de réservation */
+.reservation-form input[type="checkbox"] {
+    border-color: rgba(255, 255, 255, 0.6);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.reservation-form input[type="checkbox"]:checked {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+}
+
+.reservation-form input[type="checkbox"]:hover {
+    border-color: white;
+}
+
+.reservation-form label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.reservation-form label:hover {
+    color: white;
+}
+
+/* Style pour les checkboxes dans l'admin */
+.wp-admin input[type="checkbox"] {
+    border-color: #dcdcde;
+}
+
+.wp-admin input[type="checkbox"]:checked {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+}
+
+.wp-admin input[type="checkbox"]:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 1px var(--color-secondary);
+}
+
+/* ===== STYLES POUR LES ÉLÉMENTS SELECT ===== */
+
+/* Style de base pour les sélecteurs */
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding: 12px 40px 12px 16px;
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--color-primary);
+    background-color: var(--color-white);
+    border: 2px solid var(--color-beige-dark);
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b5a692' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 12px;
+    width: 100%;
+    max-width: 100%;
+    outline: none;
+}
+
+/* État hover */
+select:hover {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 3px rgba(181, 166, 146, 0.3);
+}
+
+/* État focus */
+select:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 2px rgba(181, 166, 146, 0.4);
+}
+
+/* Style pour les options */
+select option {
+    background-color: var(--color-white);
+    color: var(--color-primary);
+    padding: 10px;
+    font-weight: 400;
+}
+
+/* Style pour les options survolées ou sélectionnées */
+select option:hover,
+select option:checked {
+    background-color: var(--color-beige-light);
+    color: var(--color-secondary);
+}
+
+/* Style pour les select désactivés */
+select:disabled {
+    background-color: var(--color-beige-light);
+    opacity: 0.7;
+    cursor: not-allowed;
+    border-color: var(--color-beige-dark);
+}
+
+/* Style pour une version plus petite des select */
+select.select-sm {
+    padding: 8px 36px 8px 12px;
+    font-size: 0.9rem;
+}
+
+/* Styles spécifiques pour le formulaire de réservation */
+.reservation-form select {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.6);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.reservation-form select:hover {
+    border-color: white;
+}
+
+.reservation-form select:focus {
+    border-color: white;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+}
+
+.reservation-form select option {
+    background-color: #3a3c36;
+    color: white;
+}
+
+.reservation-form select option:hover,
+.reservation-form select option:checked {
+    background-color: var(--color-secondary);
+    color: white;
+}
+
+/* Styles pour l'admin */
+.wp-admin select {
+    border-color: #dcdcde;
+}
+
+.wp-admin select:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 1px var(--color-secondary);
+}
+
+/* Styles pour les groupes sélecteur + label */
+.select-group {
+    margin-bottom: 20px;
+}
+
+.select-group label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Animation subtile au focus */
+select:focus {
+    transform: translateY(-1px);
+} 

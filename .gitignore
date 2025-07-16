@@ -1,0 +1,70 @@
+# WordPress
+/.htaccess
+/license.txt
+/readme.html
+/wp-activate.php
+/wp-blog-header.php
+/wp-comments-post.php
+/wp-config-sample.php
+/wp-config.php
+/wp-cron.php
+/wp-links-opml.php
+/wp-load.php
+/wp-login.php
+/wp-mail.php
+/wp-settings.php
+/wp-signup.php
+/wp-trackback.php
+/xmlrpc.php
+
+# WordPress gitignore
+# For more info, see https://github.com/github/gitignore/blob/main/WordPress.gitignore
+#
+# Omit parent directories from the repository.
+# You can use this to repository to deploy a site, see https://git.io/vQY2d.
+#
+# If you want to include the parent directories, comment out the next two lines.
+../
+/wp-admin/
+/wp-content/
+!/wp-content/mu-plugins/
+!/wp-content/plugins/
+!/wp-content/themes/
+/wp-includes/
+
+# WordPress in a subdirectory.
+/wordpress/
+
+#
+# End of WordPress gitignore section.
+
+# General
+.DS_Store
+.idea/
+Thumbs.db
+desktop.ini
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Composer
+vendor/
+composer.lock
+
+# Backups
+*.wpress
+*.sql
+/wp-content/ai1wm-backups/
+/wp-content/backups/
+/wp-content/upgrade/
+/wp-content/upgrade-temp-backup/
+
+# Logs
+/wp-content/debug.log
+/wp-content/email-debug.log
+*.log
+
+# Uploads
+/wp-content/uploads/ 

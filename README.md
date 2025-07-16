@@ -70,3 +70,10 @@ le-margo/
 ## Licence
 
 Ce thème est sous licence GNU General Public License v2 ou ultérieure. 
+
+## Documentation complémentaire
+
+- [Guide SEO détaillé](SEO-OPTIMIZATION-GUIDE.md)
+- [Checklist référencement](GUIDE-REFERENCEMENT-SEO.md)
+- [Mapping des images](IMAGES-MAPPING.md)
+- [Guide des témoignages](README-TEMOIGNAGES.md)

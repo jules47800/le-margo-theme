@@ -346,6 +346,16 @@
     .le-margo-modal .form-grid { grid-template-columns: 1fr; }
 }
 
+/* Modale plus compacte sur tablette */
+@media (max-width: 1024px) {
+    .le-margo-modal-dialog { width: 520px; margin: 6vh auto; }
+    .le-margo-modal-body { max-height: 55vh; overflow: auto; }
+}
+@media (max-width: 820px) {
+    .le-margo-modal-dialog { width: 460px; margin: 5vh auto; }
+    .le-margo-modal-header h2 { font-size: 16px; }
+}
+
 /* ==========================================================================
    RESPONSIVE – PAGE ADMIN RÉSERVATIONS (TABLETTE)
    ========================================================================== */

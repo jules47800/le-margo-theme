@@ -413,6 +413,12 @@
 .le-margo-reservations .reservations-table-container {
     position: relative;
 }
+
+/* S'assurer que la zone d'actions est au-dessus de l'overlay de scroll sur iPad */
+.le-margo-reservations .reservations-table .column-actions {
+    position: relative;
+    z-index: 3;
+}
 /* ==========================================================================
    METABOX MENU - Interface améliorée
    ========================================================================== */

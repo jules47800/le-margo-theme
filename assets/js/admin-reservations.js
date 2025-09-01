@@ -470,9 +470,8 @@
             openEditModal(id);
         });
         // Support tactile (iPad/tablette)
-        $(document).on('touchend', '.edit-button', function(e) {
-            e.preventDefault();
-            const id = $(this).data('reservation-id');
+        addTapHandler('.edit-button', function(target){
+            const id = $(target).data('reservation-id');
             openEditModal(id);
         });
     }
@@ -617,12 +616,40 @@
     }
 
     // Fiabiliser les taps sur les autres boutons d'action (liens)
-    $(document).on('touchend', '.reservations-table .action-buttons a', function(e) {
-        // Laisser le navigateur générer le click synthétique par défaut (pas de preventDefault)
-        // Pour certains navigateurs, déclencher un click sans bloquer la navigation
-        if (!e.defaultPrevented && this && typeof this.click === 'function') {
-            try { this.click(); } catch(_e) {}
+    addTapHandler('.reservations-table .action-buttons a', function(target){
+        const href = target.getAttribute('href');
+        if (href) {
+            // Déclencher le click natif, fallback navigation si nécessaire
+            try { target.click(); return; } catch(_e) {}
+            window.location.href = href;
         }
     });
+
+    // Gestion générique du "tap" (fiable en environnement tactile)
+    function addTapHandler(selector, onTap) {
+        let startX = 0, startY = 0, startTime = 0;
+        const TAP_MOVE_THRESHOLD = 10; // px
+        const TAP_TIME_THRESHOLD = 500; // ms
+
+        $(document).on('touchstart', selector, function(e){
+            const t = e.originalEvent.touches && e.originalEvent.touches[0];
+            if (!t) return;
+            startX = t.pageX;
+            startY = t.pageY;
+            startTime = Date.now();
+        });
+
+        $(document).on('touchend', selector, function(e){
+            const t = e.originalEvent.changedTouches && e.originalEvent.changedTouches[0];
+            if (!t) return;
+            const dx = Math.abs(t.pageX - startX);
+            const dy = Math.abs(t.pageY - startY);
+            const dt = Date.now() - startTime;
+            const isTap = dx < TAP_MOVE_THRESHOLD && dy < TAP_MOVE_THRESHOLD && dt < TAP_TIME_THRESHOLD;
+            if (!isTap) return; // geste de scroll -> ne rien faire
+            e.preventDefault();
+            onTap(this);
+        });
+    }
 
 })(jQuery); 

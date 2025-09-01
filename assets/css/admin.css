@@ -386,6 +386,8 @@
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
+        position: relative;
+        z-index: 2;
     }
 
     .le-margo-reservations .date-info { display: flex; gap: 6px; align-items: center; }
@@ -393,6 +395,23 @@
 
 @media (max-width: 782px) {
     .le-margo-reservations .reservation-stats { grid-template-columns: 1fr; }
+}
+
+/* Amélioration accessibilité tactile des boutons d'actions */
+.le-margo-reservations .reservations-table .action-buttons .button,
+.le-margo-reservations .reservations-table .action-buttons a.button {
+    min-height: 36px;
+    padding: 6px 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    pointer-events: auto;
+}
+
+.le-margo-reservations .reservations-table-container {
+    position: relative;
 }
 /* ==========================================================================
    METABOX MENU - Interface améliorée

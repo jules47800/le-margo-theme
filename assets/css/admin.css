@@ -345,6 +345,55 @@
 @media (max-width: 680px) {
     .le-margo-modal .form-grid { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================================
+   RESPONSIVE – PAGE ADMIN RÉSERVATIONS (TABLETTE)
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .le-margo-reservations .reservation-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .le-margo-reservations .reservation-stats .stat-box { min-width: 0; }
+
+    .le-margo-reservations .filter-form {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+    .le-margo-reservations .filter-form .filter-group,
+    .le-margo-reservations .filter-form .filter-actions { width: 100%; }
+    .le-margo-reservations .filter-form .filter-group input,
+    .le-margo-reservations .filter-form .filter-group select {
+        width: 100%;
+    }
+    .le-margo-reservations .filter-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .le-margo-reservations .reservations-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .le-margo-reservations .reservations-table {
+        min-width: 760px;
+    }
+
+    .le-margo-reservations .reservations-table .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .le-margo-reservations .date-info { display: flex; gap: 6px; align-items: center; }
+}
+
+@media (max-width: 782px) {
+    .le-margo-reservations .reservation-stats { grid-template-columns: 1fr; }
+}
 /* ==========================================================================
    METABOX MENU - Interface améliorée
    ========================================================================== */

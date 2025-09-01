@@ -43,6 +43,19 @@ function le_margo_enqueue_assets($hook = '') {
             wp_enqueue_script('flatpickr-fr', 'https://npmcdn.com/flatpickr/dist/l10n/fr.js', ['flatpickr'], '4.6.9', true);
 
             wp_enqueue_script('le-margo-admin-reservations', get_template_directory_uri() . '/assets/js/admin-reservations.js', ['jquery', 'flatpickr'], LE_MARGO_VERSION, true);
+
+            // Localisation des paramètres et du nonce pour les actions d'édition
+            wp_localize_script('le-margo-admin-reservations', 'le_margo_res_admin', array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('le_margo_reservation_edit'),
+                'i18n' => array(
+                    'editTitle' => __('Modifier la réservation', 'le-margo'),
+                    'save' => __('Enregistrer', 'le-margo'),
+                    'cancel' => __('Annuler', 'le-margo'),
+                    'updated' => __('Réservation mise à jour.', 'le-margo'),
+                    'error' => __('Erreur lors de la mise à jour.', 'le-margo')
+                )
+            ));
         }
     }
 

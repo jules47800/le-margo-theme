@@ -290,6 +290,62 @@
 }
 
 /* ==========================================================================
+   MODAL D'ÉDITION DE RÉSERVATION
+   ========================================================================== */
+.le-margo-modal {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100000;
+}
+.le-margo-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+}
+.le-margo-modal-dialog {
+    position: relative;
+    width: 640px;
+    max-width: 94vw;
+    margin: 8vh auto;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    border-radius: 8px;
+}
+.le-margo-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e2e4e7;
+}
+.le-margo-modal-header h2 { margin: 0; font-size: 18px; }
+.le-margo-modal-close { background: transparent; border: 0; font-size: 20px; cursor: pointer; }
+.le-margo-modal-body { padding: 16px; }
+.le-margo-modal-footer { padding: 12px 16px; border-top: 1px solid #e2e4e7; display: flex; gap: 8px; justify-content: flex-end; }
+
+.le-margo-modal .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.le-margo-modal .form-grid label { display: flex; flex-direction: column; gap: 6px; font-weight: 500; }
+.le-margo-modal input[type="text"],
+.le-margo-modal input[type="email"],
+.le-margo-modal input[type="date"],
+.le-margo-modal input[type="time"],
+.le-margo-modal input[type="number"],
+.le-margo-modal textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 680px) {
+    .le-margo-modal .form-grid { grid-template-columns: 1fr; }
+}
+/* ==========================================================================
    METABOX MENU - Interface améliorée
    ========================================================================== */
 

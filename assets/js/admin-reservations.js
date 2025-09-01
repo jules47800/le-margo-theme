@@ -21,6 +21,7 @@
         initEmailTest();
         initSmoothScroll();
         handleActionScrolling();
+        initEditReservation();
     }
 
     /**
@@ -115,23 +116,16 @@
     /**
      * Supprimer une plage horaire
      */
-    /*
     function removeTimeRange(dayKey, index) {
         const rangeRow = $(`.time-range-row[data-index="${index}"]`);
-        
-        // Animation de suppression
+        if (!rangeRow.length) return;
         rangeRow.fadeOut(300, function() {
             $(this).remove();
-            
-            // Réindexer les plages restantes
             reindexTimeRanges(dayKey);
-            
-            // Mettre à jour l'aperçu des créneaux
-            const dayElement = rangeRow.closest('.schedule-day');
+            const dayElement = $(`.schedule-day[data-day="${dayKey}"]`);
             updateSlotsPreview(dayElement);
         });
     }
-    */
 
     /**
      * Réindexer les plages horaires après suppression
@@ -466,5 +460,154 @@
         updateSlotsPreview,
         showNotification
     };
+
+    // ================================
+    // ÉDITION DE RÉSERVATION (MODAL)
+    // ================================
+    function initEditReservation() {
+        $(document).on('click', '.edit-button', function() {
+            const id = $(this).data('reservation-id');
+            openEditModal(id);
+        });
+    }
+
+    function buildModal() {
+        let $modal = $('#le-margo-edit-modal');
+        if ($modal.length) return $modal;
+        $modal = $(`
+            <div id="le-margo-edit-modal" class="le-margo-modal" style="display:none;">
+                <div class="le-margo-modal-backdrop"></div>
+                <div class="le-margo-modal-dialog">
+                    <div class="le-margo-modal-header">
+                        <h2>${(le_margo_res_admin && le_margo_res_admin.i18n && le_margo_res_admin.i18n.editTitle) || 'Modifier la réservation'}</h2>
+                        <button type="button" class="le-margo-modal-close">×</button>
+                    </div>
+                    <div class="le-margo-modal-body">
+                        <form id="le-margo-edit-form">
+                            <input type="hidden" name="id" />
+                            <div class="form-grid">
+                                <label>Date
+                                    <input type="date" name="reservation_date" required />
+                                </label>
+                                <label>Heure
+                                    <input type="time" name="reservation_time" required />
+                                </label>
+                                <label>Personnes
+                                    <input type="number" name="people" min="1" max="20" required />
+                                </label>
+                                <label>Nom
+                                    <input type="text" name="customer_name" required />
+                                </label>
+                                <label>Email
+                                    <input type="email" name="customer_email" />
+                                </label>
+                                <label>Téléphone
+                                    <input type="text" name="customer_phone" />
+                                </label>
+                                <label>Notes
+                                    <textarea name="notes" rows="3"></textarea>
+                                </label>
+                            </div>
+                        </form>
+                        <div class="le-margo-modal-status" style="margin-top:8px;"></div>
+                    </div>
+                    <div class="le-margo-modal-footer">
+                        <button type="button" class="button button-secondary le-margo-cancel">${(le_margo_res_admin && le_margo_res_admin.i18n && le_margo_res_admin.i18n.cancel) || 'Annuler'}</button>
+                        <button type="button" class="button button-primary le-margo-save">${(le_margo_res_admin && le_margo_res_admin.i18n && le_margo_res_admin.i18n.save) || 'Enregistrer'}</button>
+                    </div>
+                </div>
+            </div>
+        `);
+        $('body').append($modal);
+        $modal.on('click', '.le-margo-modal-close, .le-margo-cancel, .le-margo-modal-backdrop', function() {
+            closeModal();
+        });
+        $modal.on('click', '.le-margo-save', function() {
+            submitEditForm();
+        });
+        return $modal;
+    }
+
+    function openEditModal(id) {
+        const $modal = buildModal();
+        $modal.find('.le-margo-modal-status').html('');
+        $modal.fadeIn(120);
+
+        $.ajax({
+            url: (le_margo_res_admin && le_margo_res_admin.ajax_url) || ajaxurl,
+            type: 'GET',
+            data: {
+                action: 'le_margo_get_reservation',
+                security: le_margo_res_admin && le_margo_res_admin.nonce,
+                id: id
+            },
+            success: function(resp) {
+                if (!resp || !resp.success || !resp.data) {
+                    showStatus('Erreur de chargement', 'error');
+                    return;
+                }
+                fillForm(resp.data);
+            },
+            error: handleAjaxError
+        });
+    }
+
+    function fillForm(data) {
+        const $form = $('#le-margo-edit-form');
+        $form.find('[name="id"]').val(data.id);
+        $form.find('[name="reservation_date"]').val(data.reservation_date);
+        $form.find('[name="reservation_time"]').val((data.reservation_time || '').slice(0,5));
+        $form.find('[name="people"]').val(data.people);
+        $form.find('[name="customer_name"]').val(data.customer_name);
+        $form.find('[name="customer_email"]').val(data.customer_email || '');
+        $form.find('[name="customer_phone"]').val(data.customer_phone || '');
+        $form.find('[name="notes"]').val(data.notes || '');
+    }
+
+    function submitEditForm() {
+        const $form = $('#le-margo-edit-form');
+        const formData = $form.serializeArray();
+        const payload = {};
+        formData.forEach(i => payload[i.name] = i.value);
+        payload.action = 'le_margo_update_reservation';
+        payload.security = le_margo_res_admin && le_margo_res_admin.nonce;
+
+        $.ajax({
+            url: (le_margo_res_admin && le_margo_res_admin.ajax_url) || ajaxurl,
+            type: 'POST',
+            data: payload,
+            success: function(resp) {
+                if (resp && resp.success) {
+                    showStatus((le_margo_res_admin && le_margo_res_admin.i18n && le_margo_res_admin.i18n.updated) || 'Réservation mise à jour.', 'success');
+                    // Mise à jour visuelle (personnes et notes) sans rechargement
+                    const id = payload.id;
+                    const $row = $(".edit-button[data-reservation-id='"+id+"']").closest('tr');
+                    $row.find('.column-people .people-count').text(payload.people);
+                    if (payload.notes && payload.notes.trim() !== '') {
+                        $row.find('.column-notes .notes-text').text(payload.notes);
+                        if ($row.find('.column-notes .notes-content').length === 0) {
+                            $row.find('.column-notes').html('<div class="notes-content"><span class="notes-icon dashicons dashicons-admin-comments"></span><span class="notes-text"></span></div>');
+                            $row.find('.column-notes .notes-text').text(payload.notes);
+                        }
+                    } else {
+                        $row.find('.column-notes').html('<span class="no-notes">—</span>');
+                    }
+                    setTimeout(closeModal, 650);
+                } else {
+                    showStatus((le_margo_res_admin && le_margo_res_admin.i18n && le_margo_res_admin.i18n.error) || 'Erreur lors de la mise à jour.', 'error');
+                }
+            },
+            error: handleAjaxError
+        });
+    }
+
+    function showStatus(msg, type) {
+        const $box = $('#le-margo-edit-modal .le-margo-modal-status');
+        $box.html(`<div class="notice notice-${type} inline"><p>${msg}</p></div>`);
+    }
+
+    function closeModal() {
+        $('#le-margo-edit-modal').fadeOut(100);
+    }
 
 })(jQuery); 

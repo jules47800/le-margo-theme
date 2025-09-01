@@ -862,6 +862,7 @@ function le_margo_reservations_page() {
                                     </td>
                                     <td class="column-actions" data-label="<?php echo esc_attr__('Actions', 'le-margo'); ?>">
                                         <div class="action-buttons">
+                                            <button type="button" class="button action-button edit-button" data-reservation-id="<?php echo esc_attr($reservation->id); ?>" title="<?php echo esc_attr__('Modifier', 'le-margo'); ?>"><span class="dashicons dashicons-edit"></span></button>
                                             <?php if ($reservation->status === 'pending') : ?>
                                                 <a href="<?php echo le_margo_get_action_url('confirm', $reservation->id, $date_filter, $status_filter); ?>" class="button action-button confirm-button" title="<?php echo esc_attr__('Confirmer', 'le-margo'); ?>"><span class="dashicons dashicons-yes"></span></a>
                                             <?php endif; ?>
@@ -1059,4 +1060,56 @@ add_action('wp_ajax_le_margo_get_availability', 'le_margo_get_availability_callb
 add_action('wp_ajax_nopriv_le_margo_get_availability', 'le_margo_get_availability_callback');
 
 
-  
+/**
+ * Récupérer une réservation (AJAX)
+ */
+function le_margo_get_reservation_ajax() {
+    check_ajax_referer('le_margo_reservation_edit', 'security');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(['message' => __('Accès refusé', 'le-margo')], 403);
+    }
+    if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+        wp_send_json_error(['message' => __('ID invalide', 'le-margo')], 400);
+    }
+    $id = intval($_GET['id']);
+    $reservation = le_margo_get_reservation_manager()->get_reservation($id);
+    if (!$reservation) {
+        wp_send_json_error(['message' => __('Introuvable', 'le-margo')], 404);
+    }
+    wp_send_json_success($reservation);
+}
+add_action('wp_ajax_le_margo_get_reservation', 'le_margo_get_reservation_ajax');
+
+/**
+ * Mettre à jour une réservation (AJAX)
+ */
+function le_margo_update_reservation_ajax() {
+    check_ajax_referer('le_margo_reservation_edit', 'security');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(['message' => __('Accès refusé', 'le-margo')], 403);
+    }
+    $required = ['id','reservation_date','reservation_time','people','customer_name'];
+    foreach ($required as $key) {
+        if (!isset($_POST[$key]) || $_POST[$key] === '') {
+            wp_send_json_error(['message' => __('Champs manquants', 'le-margo')], 400);
+        }
+    }
+
+    $id = intval($_POST['id']);
+    $data = array(
+        'reservation_date' => sanitize_text_field($_POST['reservation_date']),
+        'reservation_time' => sanitize_text_field($_POST['reservation_time']),
+        'people' => absint($_POST['people']),
+        'customer_name' => sanitize_text_field($_POST['customer_name']),
+        'customer_email' => isset($_POST['customer_email']) ? sanitize_email($_POST['customer_email']) : null,
+        'customer_phone' => isset($_POST['customer_phone']) ? sanitize_text_field($_POST['customer_phone']) : null,
+        'notes' => isset($_POST['notes']) ? sanitize_textarea_field($_POST['notes']) : '',
+    );
+
+    $updated = le_margo_get_reservation_manager()->update_reservation($id, $data);
+    if ($updated === false) {
+        wp_send_json_error(['message' => __('Échec de la mise à jour', 'le-margo')], 500);
+    }
+    wp_send_json_success(['message' => __('Réservation mise à jour', 'le-margo')]);
+}
+add_action('wp_ajax_le_margo_update_reservation', 'le_margo_update_reservation_ajax');

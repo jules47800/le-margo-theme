@@ -1147,56 +1147,35 @@
     font-size: 16px;
 }
 
-/* Notes tooltip */
-.note-tooltip {
-    position: relative;
-    display: inline-block;
-    cursor: help;
+/* Notes affichées directement - Plus pratique pour allergies */
+.notes-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    max-width: 100%;
 }
 
-.note-tooltip .dashicons {
+.notes-icon {
     color: #b5a692;
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    margin-top: 2px;
+    flex-shrink: 0;
 }
 
-.note-tooltip:hover .dashicons {
-    color: #a39483;
-}
-
-.tooltip-text {
-    visibility: hidden;
-    opacity: 0;
-    position: absolute;
-    bottom: 125%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
-    color: #fff;
-    padding: 8px 12px;
-    border-radius: 4px;
+.notes-text {
     font-size: 13px;
-    white-space: nowrap;
-    z-index: 1000;
-    transition: opacity 0.2s ease;
-    max-width: 300px;
-    white-space: normal;
+    line-height: 1.4;
+    color: #2c3338;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 200px;
 }
 
-.tooltip-text::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 5px solid transparent;
-    border-top-color: #333;
-}
-
-.note-tooltip:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
+.no-notes {
+    color: #999;
+    font-style: italic;
 }
 
 /* Boutons d'action */
@@ -1454,43 +1433,361 @@
     border-left: 4px solid #b5a692 !important;
 }
 
-/* Responsive - Réservations */
-@media screen and (max-width: 782px) {
+/* ==========================================================================
+   RESPONSIVE DESIGN COMPLET - INTERFACE RÉSERVATIONS
+   ========================================================================== */
+
+/* TABLETTES LARGES - 1024px à 1200px */
+@media screen and (max-width: 1200px) {
+    .le-margo-reservations .wrap {
+        max-width: 100%;
+        padding: 0 15px;
+    }
+    
+    .reservation-stats {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 15px;
+    }
+    
+    .stat-box {
+        padding: 20px;
+    }
+}
+
+/* TABLETTES STANDARD - 768px à 1024px */
+@media screen and (max-width: 1024px) {
+    /* Stats en 2 colonnes sur tablette */
+    .reservation-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    
+    /* Amélioration des filtres pour tablette */
+    .filter-bar {
+        padding: 15px;
+    }
+    
+    .filter-form {
+        gap: 15px;
+    }
+    
+    .filter-group {
+        gap: 10px;
+    }
+    
+    .filter-input {
+        min-width: 180px;
+    }
+    
+    /* Table responsive avec scroll horizontal amélioré */
+    .reservations-table-container {
+        overflow-x: auto;
+        border-radius: 8px;
+        border: 1px solid #e2e4e7;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .reservations-table {
+        min-width: 900px; /* Force une largeur minimum */
+    }
+    
+    /* Boutons d'action plus grands pour tablette */
+    .action-button {
+        min-width: 32px !important;
+        height: 32px !important;
+        margin: 0 2px !important;
+    }
+    
+    .action-button .dashicons {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+    }
+    
+    /* Formulaire rapide plus accessible */
+    .quick-add-form .form-table th {
+        width: 140px;
+        font-size: 14px;
+    }
+    
+    .quick-add-form input[type="text"],
+    .quick-add-form input[type="tel"],
+    .quick-add-form input[type="date"],
+    .quick-add-form input[type="number"],
+    .quick-add-form select {
+        padding: 10px 14px;
+        font-size: 15px;
+    }
+}
+
+/* TABLETTES PORTRAIT - 768px et moins */
+@media screen and (max-width: 768px) {
+    /* Container principal plus compact - éviter les débordements */
+    .le-margo-reservations .wrap {
+        margin: 10px auto;
+        padding: 0 10px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    .le-margo-reservations .wrap h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+        word-wrap: break-word;
+    }
+    
+    /* Stats en colonne unique */
+    .reservation-stats {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+        width: 100%;
+    }
+    
+    .stat-box {
+        padding: 15px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+    }
+    
+    /* Barre de filtres verticale */
+    .filter-bar {
+        padding: 12px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
     .filter-form {
         flex-direction: column;
         align-items: stretch;
-    }
-
-    .filter-group {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .filter-input {
+        gap: 12px;
         width: 100%;
     }
-
+    
+    .filter-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        width: 100%;
+    }
+    
+    .filter-input {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        padding: 12px;
+        font-size: 16px; /* Évite le zoom sur iOS */
+        box-sizing: border-box;
+    }
+    
     .filter-actions {
         margin-left: 0;
-        justify-content: flex-end;
+        justify-content: stretch;
+        gap: 10px;
+        width: 100%;
     }
-
+    
+    .filter-button,
+    .reset-button {
+        flex: 1;
+        padding: 12px !important;
+        font-size: 14px !important;
+        justify-content: center !important;
+        max-width: calc(50% - 5px);
+        box-sizing: border-box;
+    }
+    
+    /* Table transformée en cartes sur mobile */
+    .reservations-table-container {
+        border: none;
+        box-shadow: none;
+        width: 100%;
+        overflow: visible;
+    }
+    
+    .reservations-table,
+    .reservations-table thead,
+    .reservations-table tbody,
+    .reservations-table th,
+    .reservations-table td,
+    .reservations-table tr {
+        display: block;
+        width: 100%;
+    }
+    
+    .reservations-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+    
+    .reservations-table tr {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 15px;
+        padding: 15px;
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+    
+    .reservations-table td {
+        border: none;
+        padding: 8px 0;
+        position: relative;
+        padding-left: 110px !important;
+        min-height: 30px;
+        display: flex;
+        align-items: flex-start;
+        width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    /* Colonne actions spécialement traitée sur mobile */
+    .reservations-table .column-actions {
+        padding-left: 0 !important;
+        padding-top: 15px !important;
+        min-height: 60px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        margin: 10px -15px -15px -15px;
+        padding: 15px;
+        border-top: 1px solid #e2e4e7;
+        border-radius: 0 0 8px 8px;
+    }
+    
+    .reservations-table .column-actions:before {
+        content: "Actions";
+        position: absolute;
+        top: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #646970;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .reservations-table td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 100px;
+        font-weight: 600;
+        color: #646970;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+        word-wrap: break-word;
+    }
+    
+    /* Contenu des cellules adapté */
+    .reservations-table td > * {
+        max-width: 100%;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    /* Customer info responsive */
+    .customer-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .customer-name {
+        font-weight: 500;
+        word-wrap: break-word;
+    }
+    
+    .customer-email,
+    .customer-phone {
+        font-size: 12px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+    }
+    
+    /* Notes responsive */
+    .notes-content {
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+        max-width: 100%;
+    }
+    
+    .notes-text {
+        max-width: 100%;
+        font-size: 12px;
+        line-height: 1.3;
+    }
+    
+    /* Ajustements pour les boutons d'action sur mobile */
     .action-buttons {
         flex-wrap: wrap;
-        gap: 2px;
+        gap: 8px;
+        margin-top: 10px;
+        width: 100%;
+        justify-content: flex-start;
+        padding: 5px 0;
     }
-
+    
     .action-button {
-        min-width: 24px !important;
-        height: 24px !important;
+        min-width: 44px !important;
+        height: 44px !important;
+        border-radius: 8px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
+        z-index: 10 !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: rgba(0,0,0,0.1) !important;
     }
-
+    
     .action-button .dashicons {
-        font-size: 12px;
-        width: 12px;
-        height: 12px;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        line-height: 1;
     }
-
+    
+    /* Amélioration visuelle des boutons sur mobile */
+    .action-button::before {
+        content: '';
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        right: -8px;
+        bottom: -8px;
+        border-radius: 12px;
+        z-index: -1;
+    }
+    
+    /* États actifs pour mobile */
+    .action-button:active {
+        transform: scale(0.95) !important;
+        transition: transform 0.1s ease !important;
+    }
+    
+    /* Formulaire rapide mobile-first */
     .quick-add-form .form-table,
     .quick-add-form .form-table tbody,
     .quick-add-form .form-table tr,
@@ -1498,13 +1795,22 @@
     .quick-add-form .form-table td {
         display: block;
         width: 100%;
-        padding: 5px 0;
+        box-sizing: border-box;
     }
-
+    
     .quick-add-form .form-table th {
-        padding-bottom: 0;
+        padding: 10px 0 5px 0;
+        width: 100%;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1d2327;
     }
-
+    
+    .quick-add-form .form-table td {
+        padding: 0 0 15px 0;
+        width: 100%;
+    }
+    
     .quick-add-form input[type="text"],
     .quick-add-form input[type="tel"],
     .quick-add-form input[type="date"],
@@ -1512,19 +1818,222 @@
     .quick-add-form select,
     .quick-add-form textarea {
         max-width: 100%;
+        width: 100%;
+        padding: 14px;
+        font-size: 16px; /* Évite le zoom sur iOS */
+        border-radius: 6px;
+        box-sizing: border-box;
     }
+    
+    .quick-add-form .button-primary {
+        width: 100% !important;
+        padding: 16px !important;
+        font-size: 16px !important;
+        border-radius: 6px !important;
+        box-sizing: border-box;
+    }
+}
 
-    .reservations-table {
+/* MOBILE PORTRAIT - 480px et moins */
+@media screen and (max-width: 480px) {
+    .le-margo-reservations .wrap {
+        padding: 0 5px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    .stat-box {
+        padding: 12px;
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .stat-icon {
+        margin-right: 0;
+        margin-bottom: 10px;
+        width: 50px;
+        height: 50px;
+    }
+    
+    .stat-icon .dashicons {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+    }
+    
+    .stat-number {
+        font-size: 20px;
+    }
+    
+    .reservations-table tr {
+        padding: 12px;
+        margin-bottom: 12px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .reservations-table td {
+        padding-left: 80px !important;
+        min-height: 25px;
+        font-size: 13px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    /* Actions encore plus visibles sur très petit mobile */
+    .reservations-table .column-actions {
+        margin: 15px -12px -12px -12px !important;
+        padding: 12px !important;
+        background: linear-gradient(135deg, #b5a692 0%, #a39483 100%) !important;
+        border-top: 2px solid #8b7355 !important;
+    }
+    
+    .reservations-table .column-actions:before {
+        content: "ACTIONS" !important;
+        background: #8b7355 !important;
+        color: white !important;
+        font-size: 9px !important;
+        padding: 3px 6px !important;
+        top: -8px !important;
+    }
+    
+    .reservations-table td:before {
+        width: 75px;
+        font-size: 10px;
+    }
+    
+    /* Customer info très compact */
+    .customer-name {
         font-size: 13px;
     }
-
-    .reservations-table th,
-    .reservations-table td {
-        padding: 8px 10px;
+    
+    .customer-email,
+    .customer-phone {
+        font-size: 11px;
     }
-
-    .customer-info {
+    
+    /* Notes très compactes */
+    .notes-text {
+        font-size: 11px;
+        line-height: 1.2;
+    }
+    
+    .notes-icon {
         font-size: 12px;
+        width: 12px;
+        height: 12px;
+    }
+    
+    .action-button {
+        min-width: 44px !important;
+        height: 44px !important;
+        padding: 0 8px !important;
+        gap: 4px !important;
+        flex-direction: column !important;
+    }
+    
+    .action-button .dashicons {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+    }
+    
+    /* Labels texte pour les boutons sur très petit mobile */
+    .confirm-button::after {
+        content: "OK";
+        font-size: 9px;
+        line-height: 1;
+        margin-top: 2px;
+        color: inherit;
+    }
+    
+    .cancel-button::after {
+        content: "✗";
+        font-size: 10px;
+        line-height: 1;
+        margin-top: 2px;
+        color: inherit;
+    }
+    
+    .delete-button::after {
+        content: "🗑";
+        font-size: 8px;
+        line-height: 1;
+        margin-top: 2px;
+    }
+    
+    /* Ajustements pour les actions sur très petit écran */
+    .action-buttons {
+        gap: 6px;
+        justify-content: space-around;
+        padding: 8px 0;
+    }
+    
+    /* Vue buttons responsive */
+    .view-buttons {
+        flex-wrap: wrap;
+        gap: 5px;
+        width: 100%;
+    }
+    
+    .view-btn {
+        flex: 1;
+        min-width: 0;
+        justify-content: center;
+        padding: 8px 6px;
+        font-size: 11px;
+        box-sizing: border-box;
+    }
+    
+    /* Filtres ultra-compacts */
+    .filter-button,
+    .reset-button {
+        padding: 10px !important;
+        font-size: 13px !important;
+    }
+}
+
+/* AMÉLIORATIONS TACTILES POUR TABLETTES */
+@media (hover: none) and (pointer: coarse) {
+    /* Zones tactiles plus grandes */
+    .action-button {
+        min-width: 44px !important;
+        height: 44px !important;
+        margin: 2px !important;
+    }
+    
+    .filter-button,
+    .reset-button {
+        padding: 14px 16px !important;
+        font-size: 15px !important;
+    }
+    
+    .view-btn {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    /* Amélioration des liens et boutons */
+    .customer-email,
+    .customer-phone {
+        padding: 8px 4px;
+        margin: -8px -4px;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+    }
+    
+    .customer-email:active,
+    .customer-phone:active {
+        background-color: rgba(181, 166, 146, 0.1);
+    }
+    
+    /* Messages plus visibles */
+    .notice {
+        font-size: 15px;
+        padding: 16px;
     }
 }
 
@@ -2084,4 +2593,78 @@
 
 .filter-group-search input[type="search"] {
     min-width: 300px;
+} 
+
+/* ----------------------------------------------------------------
+ * Réservations
+ * ---------------------------------------------------------------- */
+
+/* Par défaut, les réservations publiques sont en vert clair */
+.le-margo-reservations .reservations-table tbody tr {
+    background-color: #e8f8e8; /* Vert clair */
+}
+.le-margo-reservations .reservations-table tbody tr:hover {
+    background-color: #d9f2d9; /* Vert un peu plus foncé au survol */
+}
+
+/* Les réservations admin (bleu) surchargent le style par défaut */
+.le-margo-reservations .reservations-table tr.admin-reservation {
+    background-color: #e7f5fe; /* Un bleu très clair */
+}
+
+.le-margo-reservations .reservations-table tr.admin-reservation:hover {
+    background-color: #d8effc; /* Un peu plus foncé au survol */
+} 
+
+/* ----------------------------------------------------------------
+ * Bannière de cookies (CookieYes)
+ * ---------------------------------------------------------------- */
+
+/* Conteneur principal de la bannière */
+#cookie-law-info-bar {
+    background-color: #f5f1ea !important; /* Fond beige clair, comme le footer de l'email */
+    color: #333333 !important; /* Texte principal sombre */
+    padding: 20px 25px !important;
+    font-family: 'Gilda Display', serif !important;
+    border-top: 1px solid #d8cfc0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08) !important;
+}
+
+/* Texte de la bannière */
+#cookie-law-info-bar .cli-plugin-main-message {
+    font-size: 16px !important;
+    line-height: 1.6;
+}
+
+/* Boutons */
+#cookie-law-info-bar .cli-plugin-button {
+    background-color: #b5a692 !important; /* Couleur accentuée du thème */
+    color: #ffffff !important;
+    border-radius: 25px !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background-color 0.3s ease;
+    border: none !important;
+    margin: 5px 10px !important;
+}
+
+/* Bouton "Accepter" au survol */
+#cookie-law-info-bar .cli-plugin-button:hover {
+    background-color: #a08f7a !important; /* Une teinte plus foncée de l'accent */
+}
+
+/* Lien "En savoir plus" ou "Politique de confidentialité" */
+#cookie-law-info-bar .cli-plugin-main-link {
+    color: #333333 !important;
+    text-decoration: underline !important;
+    font-weight: normal !important;
+    background-color: transparent !important;
+}
+
+#cookie-law-info-bar .cli-plugin-main-link:hover {
+    color: #000000 !important;
+    background-color: transparent !important;
 } 

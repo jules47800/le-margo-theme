@@ -33,7 +33,6 @@ D'après notre analyse, Le Margo n'apparaît pas dans les résultats Michelin po
 - "restaurant Eymet"
 - "restaurant Dordogne" 
 - "Le Margo"
-- "meilleur restaurant Eymet"
 
 🎯 SECONDAIRES :
 - "restaurant gastronomique Périgord"
@@ -52,7 +51,7 @@ D'après notre analyse, Le Margo n'apparaît pas dans les résultats Michelin po
    - Nom exact : "Le Margo"
    - Adresse : 6 avenue du 6 juin 1944, 24500 Eymet
    - Téléphone : 06 02 55 63 15
-   - Site web : [votre-domaine]
+   - Site web : lemargo.fr
    - Catégorie : Restaurant français, Restaurant gastronomique
    - Photos : minimum 20 photos HD
    - Posts réguliers (menu du jour, événements)

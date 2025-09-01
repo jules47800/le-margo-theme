@@ -77,5 +77,17 @@ function le_margo_setup() {
             'script',
         )
     );
+
+    // Enregistrement des modèles de page
+    add_theme_support('block-templates');
+    
+    // Ajout des modèles de page personnalisés
+    add_filter('theme_page_templates', function($templates) {
+        return array_merge($templates, array(
+            'front-page.php' => __('Page d\'accueil', 'le-margo'),
+            'page-reserver.php' => __('Page Réservation', 'le-margo'),
+            'page-eymet.php' => __('Page Eymet', 'le-margo'),
+        ));
+    });
 }
 add_action('after_setup_theme', 'le_margo_setup'); 

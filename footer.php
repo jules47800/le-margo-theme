@@ -21,8 +21,8 @@
 
                 <div class="footer-hours">
                     <?php
-                    if (function_exists('le_margo_get_formatted_opening_hours')) {
-                        echo le_margo_get_formatted_opening_hours();
+                    if (function_exists('le_margo_display_opening_hours')) {
+                        le_margo_display_opening_hours();
                     }
                     ?>
                 </div>

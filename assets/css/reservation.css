@@ -91,16 +91,18 @@ textarea {
     border: 1px solid #eee;
 }
 
+/* États des créneaux */
 .time-slot {
-    padding: 12px 8px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    padding: 12px;
     text-align: center;
+    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    background-color: #fff;
-    font-weight: 500;
-    color: #333;
+    transition: all 0.2s ease;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .time-slot.selectable:hover {
@@ -141,12 +143,35 @@ textarea {
     opacity: 0.8;
 }
 
-.info-state, .loading-state {
+/* Message d'information */
+.info-state {
     grid-column: 1 / -1;
-    text-align: center;
     padding: 20px;
-    color: #777;
-    font-size: 0.95rem;
+    text-align: center;
+    background: #fff3cd61;
+    border: 1px solid #ffeeba;
+    color: #856404;
+    border-radius: 6px;
+}
+
+.info-state p {
+    margin: 0 0 10px 0;
+}
+
+.info-state p:last-child {
+    margin-bottom: 0;
+}
+
+.info-state .phone-link {
+    color: #856404;
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px dashed currentColor;
+}
+
+.info-state .phone-link:hover {
+    color: #533f02;
+    border-bottom-style: solid;
 }
 
 /* --- Cases à cocher personnalisées --- */

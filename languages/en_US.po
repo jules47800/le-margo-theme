@@ -1,0 +1,177 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Le Margo\n"
+"POT-Creation-Date: 2023-10-27 10:00+0000\n"
+"PO-Revision-Date: 2023-10-27 10:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: AI Assistant\n"
+
+msgid "Réservation"
+msgstr "Reservation"
+
+msgid "Instagram"
+msgstr "Instagram"
+
+msgid "Mail"
+msgstr "Mail"
+
+msgid "Menu"
+msgstr "Menu"
+
+msgid "Le Margo"
+msgstr "Le Margo"
+
+msgid "Restaurant Bistronomique à Eymet, Dordogne"
+msgstr "Bistronomic Restaurant in Eymet, Dordogne"
+
+msgid "Découvrez une cuisine locale et créative, élaborée à partir de produits frais et bio du Périgord, accompagnée d'une sélection de vins naturels."
+msgstr "Discover a local and creative cuisine, made from fresh and organic products from Périgord, accompanied by a selection of natural wines."
+
+msgid "Réserver"
+msgstr "Book"
+
+msgid "Veuillez configurer votre galerie dans les réglages du thème."
+msgstr "Please configure your gallery in the theme settings."
+
+msgid "Une table, un moment"
+msgstr "A table, a moment"
+
+msgid "Le Margo vous attend"
+msgstr "Le Margo awaits you"
+
+msgid "Une cuisine qui raconte une histoire"
+msgstr "A cuisine that tells a story"
+
+msgid "Des saveurs qui marquent les esprits"
+msgstr "Flavors that leave a mark"
+
+msgid "Un moment qui devient souvenir"
+msgstr "A moment that becomes a memory"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "JJ/MM/AAAA"
+msgstr "DD/MM/YYYY"
+
+msgid "Horaire"
+msgstr "Time"
+
+msgid "Choisissez d'abord une date"
+msgstr "First, choose a date"
+
+msgid "Personnes"
+msgstr "Guests"
+
+msgid "Sélectionnez..."
+msgstr "Select..."
+
+msgid "personne"
+msgstr "person"
+
+msgid "personnes"
+msgstr "people"
+
+msgid "Plus de 10 personnes"
+msgstr "More than 10 people"
+
+msgid "Pour les groupes de 4 personnes ou plus, merci de nous appeler pour garantir la meilleure expérience !"
+msgstr "For groups of 4 or more, please call us to ensure the best experience!"
+
+msgid "Appeler le restaurant"
+msgstr "Call the restaurant"
+
+msgid "Nom"
+msgstr "Name"
+
+msgid "Nom et prénom"
+msgstr "First and last name"
+
+msgid "Téléphone"
+msgstr "Phone"
+
+msgid "Pour vous contacter"
+msgstr "To contact you"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Pour confirmation"
+msgstr "For confirmation"
+
+msgid "Allergies ou végétarien ?"
+msgstr "Allergies or vegetarian?"
+
+msgid "Merci de préciser toute allergie ou demande végétarienne dans les notes. Nous adaptons nos plats avec plaisir !"
+msgstr "Please specify any allergies or vegetarian requests in the notes. We are happy to adapt our dishes!"
+
+msgid "Notes spéciales (optionnel)"
+msgstr "Special notes (optional)"
+
+msgid "Allergies, occasion spéciale..."
+msgstr "Allergies, special occasion..."
+
+msgid "Préférences & Consentement"
+msgstr "Preferences & Consent"
+
+msgid "Recevoir un rappel par email avant ma réservation"
+msgstr "Receive a reminder by email before my reservation"
+
+msgid "S'inscrire à notre newsletter pour nos actualités et offres"
+msgstr "Subscribe to our newsletter for our news and offers"
+
+msgid "J'ai lu et j'accepte la <a href=\"%s\" target=\"_blank\">politique de confidentialité</a> du site.*"
+msgstr "I have read and agree to the site's <a href=\"%s\" target=\"_blank\">privacy policy</a>.*"
+
+msgid "En soumettant ce formulaire, vous acceptez notre <a href=\"%1$s\" target=\"_blank\">politique de confidentialité</a>. Vous pouvez à tout moment exercer vos droits RGPD via notre <a href=\"%2$s\" target=\"_blank\">formulaire de suppression de données</a>."
+msgstr "By submitting this form, you agree to our <a href=\"%1$s\" target=\"_blank\">privacy policy</a>. You can exercise your GDPR rights at any time via our <a href=\"%2$s\" target=\"_blank\">data deletion form</a>."
+
+msgid "Réservez votre table"
+msgstr "Book your table"
+
+msgid "Votre demande a bien été reçue !"
+msgstr "Your request has been well received!"
+
+msgid "Nous avons hâte de vous accueillir au Margo."
+msgstr "We look forward to welcoming you to Le Margo."
+
+msgid "Un email de confirmation vient de vous être envoyé avec les détails de votre demande. Nous la traiterons dans les plus brefs délais."
+msgstr "A confirmation email has just been sent to you with the details of your request. We will process it as soon as possible."
+
+msgid "Pensez à vérifier votre dossier de courriers indésirables (spam) si vous ne le trouvez pas."
+msgstr "Remember to check your spam folder if you can't find it."
+
+msgid "En cas de question ou de modification, n'hésitez pas à nous appeler :"
+msgstr "If you have any questions or changes, do not hesitate to call us:"
+
+msgid "Retour à l'accueil"
+msgstr "Back to home"
+
+msgid "Oups, cette page n'existe pas !"
+msgstr "Oops, this page does not exist!"
+
+msgid "Il semblerait que la page que vous cherchez n'existe plus ou n'ait jamais existé."
+msgstr "It seems that the page you are looking for no longer exists or never existed."
+
+msgid "Pas de panique, revenez à l'accueil pour continuer votre expérience gourmande chez"
+msgstr "Don't panic, go back to the home page to continue your gourmet experience at"
+
+msgid "Notre carte"
+msgstr "Our menu"
+
+msgid "Tous nos menus"
+msgstr "All our menus"
+
+msgid "Découvrez l'ensemble de nos menus, à télécharger ou consulter en ligne."
+msgstr "Discover all our menus, to download or consult online."
+
+msgid "Aucun fichier disponible pour ce menu."
+msgstr "No file available for this menu."
+
+msgid "Aucun menu disponible pour le moment."
+msgstr "No menu available at the moment."

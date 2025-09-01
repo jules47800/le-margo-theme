@@ -121,6 +121,30 @@ function le_margo_advanced_stats_page() {
                 .highlight-value {
                     color: #e0a872;
                 }
+                .stats-summary {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 15px;
+                }
+                .summary-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px 0;
+                    border-bottom: 1px solid #f0f0f0;
+                }
+                .summary-item:last-child {
+                    border-bottom: none;
+                }
+                .summary-label {
+                    font-weight: 500;
+                    color: #666;
+                }
+                .summary-value {
+                    font-weight: bold;
+                    color: #e0a872;
+                    font-size: 18px;
+                }
             </style>
             
             <!-- 1. Résumé et KPI -->
@@ -185,32 +209,57 @@ function le_margo_advanced_stats_page() {
                     <thead>
                         <tr>
                             <th><?php echo esc_html__('Date', 'le-margo'); ?></th>
-                            <th><?php echo esc_html__('Déjeuner', 'le-margo'); ?></th>
-                            <th><?php echo esc_html__('Dîner', 'le-margo'); ?></th>
-                            <th><?php echo esc_html__('Global', 'le-margo'); ?></th>
+                            <th><?php echo esc_html__('Taux d\'occupation', 'le-margo'); ?></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
-                        if (!empty($advanced_stats['occupancy_data'])) {
-                            $displayed = 0;
-                            foreach ($advanced_stats['occupancy_data'] as $date => $data) {
-                                if ($displayed >= 7) break; // Limiter à 7 jours pour le tableau
-                                
-                                $formatted_date = date_i18n(get_option('date_format'), strtotime($date));
-                                
-                                echo '<tr>';
-                                echo '<td>' . esc_html($formatted_date) . '</td>';
-                                echo '<td>' . esc_html($data['lunch']) . '%</td>';
-                                echo '<td>' . esc_html($data['dinner']) . '%</td>';
-                                echo '<td>' . esc_html($data['overall']) . '%</td>';
-                                echo '</tr>';
-                                
-                                $displayed++;
-                            }
-                        } else {
-                            echo '<tr><td colspan="4">' . esc_html__('Aucune donnée disponible', 'le-margo') . '</td></tr>';
-                        }
+                                                 if (!empty($advanced_stats['occupancy_data'])) {
+                             $displayed = 0;
+                             $total_occupancy = 0;
+                             $days_with_data = 0;
+                             
+                             foreach ($advanced_stats['occupancy_data'] as $date => $data) {
+                                 if ($displayed >= 7) break; // Limiter à 7 jours pour le tableau
+                                 
+                                 $formatted_date = date_i18n(get_option('date_format'), strtotime($date));
+                                 $occupancy_rate = $data['overall'];
+                                 
+                                 // Calculer la moyenne pour les jours avec des données
+                                 if ($occupancy_rate > 0) {
+                                     $total_occupancy += $occupancy_rate;
+                                     $days_with_data++;
+                                 }
+                                 
+                                 // Définir la couleur selon le taux d'occupation
+                                 $color_class = '';
+                                 if ($occupancy_rate >= 80) {
+                                     $color_class = 'style="color: #27ae60; font-weight: bold;"'; // Vert pour forte occupation
+                                 } elseif ($occupancy_rate >= 50) {
+                                     $color_class = 'style="color: #f39c12; font-weight: bold;"'; // Orange pour occupation moyenne
+                                 } elseif ($occupancy_rate > 0) {
+                                     $color_class = 'style="color: #e74c3c; font-weight: bold;"'; // Rouge pour faible occupation
+                                 }
+                                 
+                                 echo '<tr>';
+                                 echo '<td>' . esc_html($formatted_date) . '</td>';
+                                 echo '<td ' . $color_class . '>' . esc_html($occupancy_rate) . '%</td>';
+                                 echo '</tr>';
+                                 
+                                 $displayed++;
+                             }
+                             
+                             // Afficher la moyenne des jours avec des données
+                             if ($days_with_data > 0) {
+                                 $avg_occupancy = round($total_occupancy / $days_with_data, 1);
+                                 echo '<tr style="background-color: #f8f9fa; font-weight: bold;">';
+                                 echo '<td>' . esc_html__('Moyenne (jours avec réservations)', 'le-margo') . '</td>';
+                                 echo '<td style="color: #e0a872;">' . esc_html($avg_occupancy) . '%</td>';
+                                 echo '</tr>';
+                             }
+                         } else {
+                             echo '<tr><td colspan="2">' . esc_html__('Aucune donnée disponible', 'le-margo') . '</td></tr>';
+                         }
                         ?>
                     </tbody>
                 </table>
@@ -263,45 +312,8 @@ function le_margo_advanced_stats_page() {
                 </table>
             </div>
             
-            <!-- 4. Déjeuner vs Dîner -->
+            <!-- 4. Source des Réservations -->
             <div class="stats-grid">
-                <div class="stats-card">
-                    <h2><?php echo esc_html__('Déjeuner vs Dîner', 'le-margo'); ?></h2>
-                    
-                    <div class="small-chart">
-                        <canvas id="service-chart"></canvas>
-                    </div>
-                    
-                    <table class="stats-table">
-                        <thead>
-                            <tr>
-                                <th><?php echo esc_html__('Service', 'le-margo'); ?></th>
-                                <th><?php echo esc_html__('Réservations', 'le-margo'); ?></th>
-                                <th><?php echo esc_html__('Taille moyenne', 'le-margo'); ?></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            $service_names = array(
-                                'lunch' => __('Déjeuner', 'le-margo'),
-                                'dinner' => __('Dîner', 'le-margo')
-                            );
-                            
-                            if (!empty($advanced_stats['service_stats'])) {
-                                foreach ($advanced_stats['service_stats'] as $service) {
-                                    $service_name = $service_names[$service->meal_type];
-                                    echo '<tr>';
-                                    echo '<td>' . esc_html($service_name) . '</td>';
-                                    echo '<td>' . esc_html($service->reservation_count) . '</td>';
-                                    echo '<td>' . esc_html(round($service->avg_party_size, 1)) . '</td>';
-                                    echo '</tr>';
-                                }
-                            }
-                            ?>
-                        </tbody>
-                    </table>
-                </div>
-
                 <div class="stats-card">
                     <h2><?php echo esc_html__('Source des Réservations', 'le-margo'); ?></h2>
                     <div class="small-chart">
@@ -312,6 +324,7 @@ function le_margo_advanced_stats_page() {
                             <tr>
                                 <th><?php echo esc_html__('Source', 'le-margo'); ?></th>
                                 <th><?php echo esc_html__('Réservations', 'le-margo'); ?></th>
+                                <th><?php echo esc_html__('Pourcentage', 'le-margo'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -320,15 +333,50 @@ function le_margo_advanced_stats_page() {
                                 'public' => __('Site Web', 'le-margo'),
                                 'admin' => __('Manuelle (Admin)', 'le-margo')
                             ];
+                            
+                            $total_reservations = array_sum($advanced_stats['source_stats']);
+                            
                             foreach ($advanced_stats['source_stats'] as $source => $count) {
+                                $percentage = $total_reservations > 0 ? round(($count / $total_reservations) * 100, 1) : 0;
                                 echo '<tr>';
                                 echo '<td>' . esc_html($source_names[$source] ?? ucfirst($source)) . '</td>';
                                 echo '<td>' . esc_html($count) . '</td>';
+                                echo '<td>' . esc_html($percentage) . '%</td>';
                                 echo '</tr>';
                             }
                             ?>
                         </tbody>
                     </table>
+                </div>
+                
+                <div class="stats-card">
+                    <h2><?php echo esc_html__('Résumé des Réservations', 'le-margo'); ?></h2>
+                    <div class="stats-summary">
+                        <?php
+                        $total_reservations = array_sum($advanced_stats['source_stats']);
+                        $avg_occupancy = 0;
+                        $count = 0;
+                        if (!empty($advanced_stats['occupancy_data'])) {
+                            foreach ($advanced_stats['occupancy_data'] as $date => $data) {
+                                $avg_occupancy += $data['overall'];
+                                $count++;
+                            }
+                            $avg_occupancy = $count > 0 ? round($avg_occupancy / $count, 1) : 0;
+                        }
+                        ?>
+                        <div class="summary-item">
+                            <div class="summary-label"><?php echo esc_html__('Total réservations', 'le-margo'); ?></div>
+                            <div class="summary-value"><?php echo esc_html($total_reservations); ?></div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label"><?php echo esc_html__('Taux d\'occupation moyen', 'le-margo'); ?></div>
+                            <div class="summary-value"><?php echo esc_html($avg_occupancy); ?>%</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label"><?php echo esc_html__('Période analysée', 'le-margo'); ?></div>
+                            <div class="summary-value"><?php echo esc_html($selected_period === 'custom' ? $start_date . ' - ' . $end_date : ucfirst(str_replace('_', ' ', $selected_period))); ?></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -489,61 +537,77 @@ function le_margo_advanced_stats_page() {
             if (document.getElementById('occupancy-chart')) {
                 const occupancyData = statsData.occupancy_data;
                 const dates = [];
-                const lunchData = [];
-                const dinnerData = [];
                 const overallData = [];
                 
                 for (const [date, data] of Object.entries(occupancyData)) {
                     const formattedDate = new Date(date).toLocaleDateString();
                     dates.unshift(formattedDate);
-                    lunchData.unshift(data.lunch);
-                    dinnerData.unshift(data.dinner);
                     overallData.unshift(data.overall);
                 }
                 
-                new Chart(document.getElementById('occupancy-chart'), {
-                    type: 'line',
-                    data: {
-                        labels: dates,
-                        datasets: [
-                            {
-                                label: '<?php echo esc_js(__('Déjeuner', 'le-margo')); ?>',
-                                data: lunchData,
-                                borderColor: primaryColor,
-                                backgroundColor: 'rgba(224, 168, 114, 0.2)',
-                                tension: 0.1
-                            },
-                            {
-                                label: '<?php echo esc_js(__('Dîner', 'le-margo')); ?>',
-                                data: dinnerData,
-                                borderColor: secondaryColor,
-                                backgroundColor: 'rgba(158, 142, 126, 0.2)',
-                                tension: 0.1
-                            },
-                            {
-                                label: '<?php echo esc_js(__('Global', 'le-margo')); ?>',
-                                data: overallData,
-                                borderColor: tertiaryColor,
-                                backgroundColor: 'rgba(58, 60, 54, 0.2)',
-                                tension: 0.1
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                min: 0,
-                                max: 100,
-                                ticks: {
-                                    callback: function(value) {
-                                        return value + '%';
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
+                                 new Chart(document.getElementById('occupancy-chart'), {
+                     type: 'line',
+                     data: {
+                         labels: dates,
+                         datasets: [
+                             {
+                                 label: '<?php echo esc_js(__('Taux d\'occupation', 'le-margo')); ?>',
+                                 data: overallData,
+                                 borderColor: primaryColor,
+                                 backgroundColor: 'rgba(224, 168, 114, 0.2)',
+                                 tension: 0.1,
+                                 fill: true,
+                                 pointBackgroundColor: function(context) {
+                                     const value = context.parsed.y;
+                                     if (value >= 80) return '#27ae60'; // Vert pour forte occupation
+                                     if (value >= 50) return '#f39c12'; // Orange pour occupation moyenne
+                                     if (value > 0) return '#e74c3c'; // Rouge pour faible occupation
+                                     return '#95a5a6'; // Gris pour 0%
+                                 },
+                                 pointBorderColor: '#fff',
+                                 pointBorderWidth: 2,
+                                 pointRadius: 6
+                             }
+                         ]
+                     },
+                     options: {
+                         responsive: true,
+                         plugins: {
+                             tooltip: {
+                                 callbacks: {
+                                     label: function(context) {
+                                         const value = context.parsed.y;
+                                         let status = '';
+                                         if (value >= 80) status = ' (Forte occupation)';
+                                         else if (value >= 50) status = ' (Occupation moyenne)';
+                                         else if (value > 0) status = ' (Faible occupation)';
+                                         else status = ' (Aucune réservation)';
+                                         return context.dataset.label + ': ' + value + '%' + status;
+                                     }
+                                 }
+                             }
+                         },
+                         scales: {
+                             y: {
+                                 min: 0,
+                                 max: 100,
+                                 ticks: {
+                                     callback: function(value) {
+                                         return value + '%';
+                                     }
+                                 },
+                                 grid: {
+                                     color: 'rgba(0,0,0,0.1)'
+                                 }
+                             },
+                             x: {
+                                 grid: {
+                                     color: 'rgba(0,0,0,0.1)'
+                                 }
+                             }
+                         }
+                     }
+                 });
             }
             
             // 2. Graphique par jour de la semaine
@@ -587,37 +651,7 @@ function le_margo_advanced_stats_page() {
                 });
             }
             
-            // 3. Graphique Déjeuner vs Dîner
-            if (document.getElementById('service-chart')) {
-                const serviceStats = statsData.service_stats;
-                const services = [];
-                const serviceData = [];
-                
-                if (serviceStats) {
-                    serviceStats.forEach(service => {
-                        services.push(service.meal_type === 'lunch' ? 
-                            '<?php echo esc_js(__('Déjeuner', 'le-margo')); ?>' : 
-                            '<?php echo esc_js(__('Dîner', 'le-margo')); ?>');
-                        serviceData.push(service.reservation_count);
-                    });
-                }
-                
-                new Chart(document.getElementById('service-chart'), {
-                    type: 'pie',
-                    data: {
-                        labels: services,
-                        datasets: [{
-                            data: serviceData,
-                            backgroundColor: [primaryColor, secondaryColor]
-                        }]
-                    },
-                    options: {
-                        responsive: true
-                    }
-                });
-            }
-            
-            // 4. Graphique taille des groupes
+            // 3. Graphique taille des groupes
             if (document.getElementById('group-size-chart')) {
                 const groupSizeStats = statsData.group_size_stats;
                 const sizes = [];
@@ -651,7 +685,7 @@ function le_margo_advanced_stats_page() {
                 });
             }
             
-            // 5. Graphique évolution mensuelle
+            // 4. Graphique évolution mensuelle
             if (document.getElementById('monthly-chart')) {
                 const monthlyStats = statsData.monthly_stats;
                 const months = [];
@@ -721,7 +755,7 @@ function le_margo_advanced_stats_page() {
                 });
             }
             
-            // 6. Graphique nouveaux vs fidèles
+            // 5. Graphique nouveaux vs fidèles
             if (document.getElementById('new-returning-chart')) {
                 const newVsReturning = statsData.new_vs_returning;
                 const dates = [];
@@ -771,7 +805,7 @@ function le_margo_advanced_stats_page() {
                 });
             }
             
-            // 7. Distribution des visites
+            // 6. Distribution des visites
             if (document.getElementById('visits-distribution-chart')) {
                 const visitDistribution = statsData.visit_distribution;
                 const visits = [];
@@ -806,27 +840,6 @@ function le_margo_advanced_stats_page() {
                     }
                 });
             }
-
-            // Graphique Déjeuner vs Dîner (Pie)
-            var serviceCtx = document.getElementById('service-chart').getContext('2d');
-            if (window.serviceChart instanceof Chart) {
-                window.serviceChart.destroy();
-            }
-            window.serviceChart = new Chart(serviceCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: [<?php echo implode(',', array_map(function($s) { return "'" . ($s->meal_type === 'lunch' ? 'Déjeuner' : 'Dîner') . "'"; }, $advanced_stats['service_stats'])); ?>],
-                    datasets: [{
-                        data: [<?php echo implode(',', array_map(function($s) { return $s->reservation_count; }, $advanced_stats['service_stats'])); ?>],
-                        backgroundColor: ['#e0a872', '#b5a692']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    legend: { position: 'bottom' }
-                }
-            });
 
             // Graphique Sources (Pie)
             var sourceCtx = document.getElementById('source-chart').getContext('2d');

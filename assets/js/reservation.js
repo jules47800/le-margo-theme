@@ -11,6 +11,9 @@
         const peopleSelect = document.getElementById('people');
         const submitButton = reservationForm.querySelector('button[type="submit"]');
         const timeAvailabilityDiv = document.querySelector('.time-availability');
+        const customerPhone = document.getElementById('customer_phone');
+        const customerEmail = document.getElementById('customer_email');
+        const customerName = document.getElementById('customer_name');
         
         let selectedTimeSlot = null; // Mémoriser le créneau sélectionné
 
@@ -55,7 +58,7 @@
 
             if (!selectedDateInput) {
                 timeSelect.disabled = true;
-                timeAvailabilityDiv.innerHTML = '<div class="info-state">Veuillez sélectionner une date</div>';
+                timeAvailabilityDiv.innerHTML = `<div class="info-state">${reservation_i18n.selectDate}</div>`;
                 validateForm();
                 return;
             }
@@ -68,12 +71,12 @@
 
             if (!daySchedule || !daySchedule.open) {
                 timeSelect.disabled = true;
-                timeAvailabilityDiv.innerHTML = '<div class="info-state">Le restaurant est fermé à cette date</div>';
+                timeAvailabilityDiv.innerHTML = `<div class="info-state">${reservation_i18n.restaurantClosed}</div>`;
                 validateForm();
                 return;
             }
             
-            timeAvailabilityDiv.innerHTML = '<div class="loading-state">Vérification des disponibilités...</div>';
+            timeAvailabilityDiv.innerHTML = `<div class="loading-state">${reservation_i18n.checkingAvailability}</div>`;
             timeSelect.disabled = true;
 
             fetchReservations(selectedDate).then(reservationsForDate => {
@@ -83,7 +86,7 @@
                 let availableTimesHtml = '';
                 let hasAvailableSlots = false;
                 
-                timeSelect.innerHTML = '<option value="" disabled selected>Sélectionnez un horaire</option>';
+                timeSelect.innerHTML = `<option value="" disabled selected>${reservation_i18n.selectTime}</option>`;
 
                 allSlots.forEach(timeSlot => {
                     const reservedSeats = reservationsForDate.time_slots[timeSlot] || 0;
@@ -99,7 +102,7 @@
                     availableTimesHtml += `
                         <div class="time-slot ${isSelectable ? 'selectable' : 'not-selectable'}" data-time="${timeSlot}">
                             <span class="time-value">${timeSlot}</span>
-                            <span class="availability-badge">${isSelectable ? `${availableSeats} dispo.` : 'Complet'}</span>
+                            <span class="availability-badge">${isSelectable ? `${availableSeats} ${reservation_i18n.available}` : reservation_i18n.full}</span>
                         </div>
                     `;
                 });
@@ -115,7 +118,11 @@
                         if(activeSlot) activeSlot.classList.add('selected');
                     }
                 } else {
-                    timeAvailabilityDiv.innerHTML = '<div class="info-state">Aucun créneau disponible pour cette date/personnes.</div>';
+                    const restaurantPhone = le_margo_params.restaurant_phone || '05 53 00 00 00';
+                    timeAvailabilityDiv.innerHTML = `<div class="info-state">
+                        <p>${reservation_i18n.noOnlineBookingForGroup.replace('%d', selectedPeople)}</p>
+                        <p>${reservation_i18n.callUs.replace('%s', `<a href="tel:${restaurantPhone}" class="phone-link">${restaurantPhone}</a>`)}</p>
+                    </div>`;
                     timeSelect.disabled = true;
                 }
                 
@@ -123,19 +130,128 @@
             });
         }
 
+        // Validation du numéro de téléphone
+        function validatePhone(phone) {
+            // Nettoyer le numéro en gardant seulement les chiffres et le +
+            const cleanPhone = phone.replace(/[^\d+]/g, '');
+            
+            // Validation plus souple pour les numéros internationaux
+            // Accepte : +33 6 12 34 56 78, +1 555 123 4567, 06 12 34 56 78, etc.
+            const phoneRegex = /^(\+?\d{1,4}[\s-]?)?\(?\d{1,4}\)?[\s-]?\d{1,4}[\s-]?\d{1,4}[\s-]?\d{1,9}$/;
+            
+            // Vérifier que le numéro a au moins 8 chiffres (minimum international)
+            const digitsOnly = cleanPhone.replace(/[^\d]/g, '');
+            return phoneRegex.test(phone) && digitsOnly.length >= 8;
+        }
+
+        // Validation de l'email
+        function validateEmail(email) {
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return emailRegex.test(email);
+        }
+
+        // Validation du nom
+        function validateName(name) {
+            return name.length >= 2;
+        }
+
+        // Fonction pour mettre à jour les messages d'erreur
+        function showFieldError(field, message) {
+            let errorDiv = field.nextElementSibling;
+            if (!errorDiv || !errorDiv.classList.contains('field-error')) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'field-error';
+                field.parentNode.insertBefore(errorDiv, field.nextSibling);
+            }
+            errorDiv.textContent = message;
+            field.classList.add('error');
+        }
+
+        function clearFieldError(field) {
+            const errorDiv = field.nextElementSibling;
+            if (errorDiv && errorDiv.classList.contains('field-error')) {
+                errorDiv.remove();
+            }
+            field.classList.remove('error');
+        }
+
+        // Validation en temps réel du téléphone
+        customerPhone.addEventListener('input', function() {
+            if (validatePhone(this.value)) {
+                clearFieldError(this);
+            } else {
+                showFieldError(this, reservation_i18n.invalidPhone);
+            }
+            validateForm();
+        });
+
+        // Validation en temps réel de l'email
+        customerEmail.addEventListener('input', function() {
+            if (validateEmail(this.value)) {
+                clearFieldError(this);
+            } else {
+                showFieldError(this, reservation_i18n.invalidEmail);
+            }
+            validateForm();
+        });
+
+        // Validation en temps réel du nom
+        customerName.addEventListener('input', function() {
+            if (validateName(this.value)) {
+                clearFieldError(this);
+            } else {
+                showFieldError(this, reservation_i18n.invalidName);
+            }
+            validateForm();
+        });
+
+        // Validation du formulaire
         function validateForm() {
             if (!submitButton) return;
+
             const requiredFields = reservationForm.querySelectorAll('[required]');
             let isValid = true;
+
             requiredFields.forEach(field => {
                 if (field.type === 'checkbox') {
                     if (!field.checked) isValid = false;
                 } else {
                     if (!field.value || field.disabled) isValid = false;
+
+                    // Validations spécifiques
+                    switch(field.id) {
+                        case 'customer_phone':
+                            if (!validatePhone(field.value)) isValid = false;
+                            break;
+                        case 'customer_email':
+                            if (!validateEmail(field.value)) isValid = false;
+                            break;
+                        case 'customer_name':
+                            if (!validateName(field.value)) isValid = false;
+                            break;
+                    }
                 }
             });
+
             submitButton.disabled = !isValid;
         }
+
+        // Ajouter du style pour les erreurs
+        const style = document.createElement('style');
+        style.textContent = `
+            .field-error {
+                color: #dc3545;
+                font-size: 0.875em;
+                margin-top: 4px;
+            }
+            input.error {
+                border-color: #dc3545;
+            }
+            input.error:focus {
+                box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+            }
+        `;
+        document.head.appendChild(style);
 
         // --- Événements ---
         dateInput.addEventListener('change', updateAvailableTimes);
@@ -177,7 +293,7 @@
                 dateFormat: 'd/m/Y',
                 minDate: 'today',
                 maxDate: maxDate,
-                locale: 'fr',
+                locale: reservation_i18n.currentLocale,
                 disable: [
                     function(date) {
                         // Règle 1: Jours de fermeture hebdomadaire

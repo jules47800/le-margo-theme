@@ -3,6 +3,11 @@
  * Le Margo - Fonctions et définitions du thème
  */
 
+// Vider le cache OPcode si disponible
+if (function_exists('opcache_reset')) {
+    opcache_reset();
+}
+
 if (!defined('_LE_MARGO_VERSION')) {
     // Remplacer le numéro de version à chaque mise à jour
     define('_LE_MARGO_VERSION', '1.0.0');
@@ -18,10 +23,14 @@ if (!defined('LE_MARGO_VERSION')) {
  * ----------------------------------------------------------------
  */
 require_once get_template_directory() . '/inc/core-setup.php';
-    require_once get_template_directory() . '/inc/customizer.php';
+require_once get_template_directory() . '/inc/customizer.php';
 require_once get_template_directory() . '/inc/widgets.php';
 require_once get_template_directory() . '/inc/enqueue.php';
 require_once get_template_directory() . '/inc/post-types.php';
+require_once get_template_directory() . '/inc/seo-meta.php';
+require_once get_template_directory() . '/inc/seo-auto-config.php';
+require_once get_template_directory() . '/inc/apply-seo-now.php'; // Script temporaire
+require_once get_template_directory() . '/inc/redirect-old-pages.php';
 
 /**
  * Inclure les fichiers nécessaires
@@ -39,29 +48,54 @@ require_once get_template_directory() . '/inc/dashboard-customer-widget.php';
 require_once get_template_directory() . '/inc/customer-admin-page.php';
 require_once get_template_directory() . '/inc/advanced-stats-page.php';
 require_once get_template_directory() . '/inc/schema-markup.php';
-require_once get_template_directory() . '/inc/seo-meta.php';
 require_once get_template_directory() . '/inc/menu-admin.php';
 require_once get_template_directory() . '/inc/testimonial-metaboxes.php';
 require_once get_template_directory() . '/inc/reservations-core.php';
+require_once get_template_directory() . '/inc/opening-hours-admin.php';
+require_once get_template_directory() . '/inc/translation-setup.php';
 
 /**
  * Enregistrement et traitement des réservations
  */
 
-// Enregistrer les scripts et styles pour la page de réservation
 function le_margo_reservation_scripts() {
     // Ne charger les scripts que sur la page de réservation
     if (is_page('reserver')) {
         // Flatpickr pour le sélecteur de date
         wp_enqueue_style('flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css', array(), '4.6.9');
         wp_enqueue_script('flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr', array(), '4.6.9', true);
-        wp_enqueue_script('flatpickr-fr', 'https://npmcdn.com/flatpickr/dist/l10n/fr.js', array('flatpickr'), '4.6.9', true);
-
-        // Nos styles et scripts personnalisés
-        wp_enqueue_style('le-margo-reservation', get_template_directory_uri() . '/assets/css/reservation.css', array(), '1.0.0');
-        wp_enqueue_script('le-margo-reservation', get_template_directory_uri() . '/assets/js/reservation.js', array('jquery'), '1.0.1', true);
         
-        // Les paramètres sont maintenant chargés dans le_margo_enqueue_assets pour éviter les doublons.
+        // Nos styles et scripts personnalisés
+        wp_enqueue_style('le-margo-reservation', get_template_directory_uri() . '/assets/css/reservation.css', array(), '1.0.1');
+        wp_enqueue_script('le-margo-reservation', get_template_directory_uri() . '/assets/js/reservation.js', array('jquery', 'flatpickr'), '1.0.2', true);
+
+        // Déterminer la locale actuelle (ex: 'fr', 'en')
+        $current_locale_full = le_margo_get_current_language(); // ex: fr_FR
+        $locale_short = substr($current_locale_full, 0, 2); // ex: fr
+
+        // Charger le fichier de langue de Flatpickr dynamiquement
+        if ($locale_short !== 'en') { // 'en' est par défaut, pas besoin de le charger
+            wp_enqueue_script('flatpickr-l10n', "https://npmcdn.com/flatpickr/dist/l10n/{$locale_short}.js", array('flatpickr'), '4.6.9', true);
+        }
+
+        // Préparer les traductions pour le JavaScript
+        $i18n_strings = array(
+            'selectDate' => __('Veuillez sélectionner une date', 'le-margo'),
+            'restaurantClosed' => __('Le restaurant est fermé à cette date', 'le-margo'),
+            'checkingAvailability' => __('Vérification des disponibilités...', 'le-margo'),
+            'selectTime' => __('Sélectionnez un horaire', 'le-margo'),
+            'seats' => __('places', 'le-margo'),
+            'available' => __('dispo.', 'le-margo'),
+            'full' => __('Complet', 'le-margo'),
+            'noOnlineBookingForGroup' => __('Désolé, nous ne prenons pas de réservations en ligne pour les groupes de plus de %d personnes.', 'le-margo'),
+            'callUs' => __('N\'hésitez pas à nous appeler directement au %s pour réserver votre table. Nous ferons tout notre possible pour vous accueillir !', 'le-margo'),
+            'invalidPhone' => __('Numéro de téléphone invalide', 'le-margo'),
+            'invalidEmail' => __('Adresse email invalide', 'le-margo'),
+            'invalidName' => __('Le nom doit contenir au moins 2 caractères', 'le-margo'),
+            'currentLocale' => $locale_short,
+        );
+
+        wp_localize_script('le-margo-reservation', 'reservation_i18n', $i18n_strings);
     }
 }
 add_action('wp_enqueue_scripts', 'le_margo_reservation_scripts');
@@ -82,15 +116,45 @@ function le_margo_send_reservation() {
         return;
     }
 
+    // Rate limiting
+    $ip = Le_Margo_Security::get_client_ip();
+    $rate_limiter = Le_Margo_Rate_Limiter::get_instance();
+    if (!$rate_limiter->check_rate_limit($ip)) {
+        le_margo_redirect_with_error('rate_limit', 'Trop de tentatives. Veuillez réessayer dans une heure.');
+        return;
+    }
+
+    // Validation stricte des données
+    if (!isset($_POST['customer_phone']) || !Le_Margo_Security::validate_phone_number($_POST['customer_phone'])) {
+        le_margo_redirect_with_error('invalid_phone', 'Le numéro de téléphone est invalide.');
+        return;
+    }
+
+    if (!isset($_POST['customer_email']) || !Le_Margo_Security::validate_email($_POST['customer_email'])) {
+        le_margo_redirect_with_error('invalid_email', 'L\'adresse email est invalide.');
+        return;
+    }
+
     $reservation_manager = le_margo_get_reservation_manager();
     
     // Déterminer la source de la requête (admin ou public)
-    // Le formulaire admin inclut un champ 'status', le public non.
     $source = isset($_POST['status']) ? 'admin' : 'public';
     
     // 2. Assainissement et validation des données
     $required_fields = ['customer_name', 'customer_phone', 'customer_email', 'people', 'date', 'time'];
     $data = array_intersect_key($_POST, array_flip($required_fields));
+    
+    // Ajouter les champs optionnels
+    $data['notes'] = isset($_POST['notes']) ? sanitize_textarea_field($_POST['notes']) : '';
+    
+    // Validation supplémentaire des données
+    if (empty($data['customer_name']) || strlen($data['customer_name']) < 2) {
+        le_margo_redirect_with_error('invalid_name', 'Le nom est trop court.');
+        return;
+    }
+
+    // Nettoyer et formater le numéro de téléphone
+    $data['customer_phone'] = Le_Margo_Security::sanitize_phone($data['customer_phone']);
     
     // Fiabiliser le format de la date
     $date_obj = DateTime::createFromFormat('d/m/Y', $data['date']);
@@ -99,25 +163,40 @@ function le_margo_send_reservation() {
         return;
     }
     
-    // Correction et standardisation des clés pour correspondre au reste du système
+    // Vérifier que la date n'est pas dans le passé
+    $today = new DateTime('today');
+    if ($date_obj < $today) {
+        le_margo_redirect_with_error('past_date', 'La date de réservation ne peut pas être dans le passé.');
+        return;
+    }
+    
+    // Correction et standardisation des clés
     $data['reservation_date'] = $date_obj->format('Y-m-d');
     $data['reservation_time'] = $data['time'];
     unset($data['date'], $data['time']);
 
-    $data['consent_data_processing'] = isset($_POST['consent_data_processing']) ? 1 : 0;
-    $data['consent_data_storage'] = isset($_POST['consent_data_storage']) ? 1 : 0;
+    // Gestion des consentements RGPD
+    $data['consent_data_processing'] = isset($_POST['consent_data_processing']) && $_POST['consent_data_processing'] == '1' ? 1 : 0;
+    $data['accept_reminder'] = isset($_POST['accept_reminder']) && $_POST['accept_reminder'] == '1' ? 1 : 0;
+    $data['newsletter'] = isset($_POST['newsletter']) && $_POST['newsletter'] == '1' ? 1 : 0;
+    
+    // Le consentement au traitement est obligatoire
+    if ($data['consent_data_processing'] !== 1) {
+        le_margo_redirect_with_error('consent_required', 'Vous devez accepter notre politique de confidentialité pour réserver.');
+        return;
+    }
+
+    // Le statut est défini ici
     $data['status'] = ($source === 'admin' && isset($_POST['status'])) ? sanitize_text_field($_POST['status']) : 'pending';
 
-    // 3. Vérification de la disponibilité (maintenant avec la source)
+    // 3. Vérification de la disponibilité
     $is_available = $reservation_manager->check_availability($data['reservation_date'], $data['reservation_time'], $data['people'], $source);
     
     if (!$is_available) {
-        // Log de l'échec pour le débogage
         error_log("Tentative de réservation échouée pour le {$data['reservation_date']} à {$data['reservation_time']} pour {$data['people']} personnes. Source: {$source}. Créneau non disponible ou règle non respectée.");
-
         le_margo_redirect_with_error(
             'availability_error',
-            'Désolé, ce créneau n\'est plus disponible ou ne respecte pas nos conditions de réservation (ex: réservation moins de 2h à l\'avance). Veuillez choisir une autre date ou heure.'
+            'Désolé, ce créneau n\'est plus disponible ou ne respecte pas nos conditions de réservation. Veuillez choisir une autre date ou heure.'
         );
         return;
     }
@@ -132,6 +211,7 @@ function le_margo_send_reservation() {
             __('Erreur lors de l\'enregistrement de la réservation. Veuillez réessayer.', 'le-margo'),
             wp_get_referer()
         );
+        return;
     }
     
     error_log("Réservation créée avec l'ID: $reservation_id");
@@ -140,8 +220,6 @@ function le_margo_send_reservation() {
     if (function_exists('le_margo_update_customer_visits')) {
         le_margo_update_customer_visits($data['customer_email'], $reservation_id);
         error_log("Statistiques mises à jour pour le client {$data['customer_email']} et la réservation ID: $reservation_id");
-    } else {
-        error_log("ERREUR: La fonction le_margo_update_customer_visits() est introuvable. Les statistiques ne sont pas mises à jour.");
     }
 
     // Envoi des emails avec gestion d'erreur améliorée
@@ -152,13 +230,10 @@ function le_margo_send_reservation() {
         
         if (!$email_sent) {
             error_log('ATTENTION: Échec de l\'envoi des emails de confirmation');
-            // Ne pas faire échouer la réservation si l'email échoue
-            // La réservation est créée, on informe juste l'utilisateur
         }
     } catch (Exception $e) {
         error_log('EXCEPTION lors de l\'envoi des emails: ' . $e->getMessage());
         error_log('Stack trace: ' . $e->getTraceAsString());
-        // Ne pas faire échouer la réservation
     }
     error_log('=== FIN ENVOI EMAILS ===');
 
@@ -226,10 +301,10 @@ add_action('init', 'le_margo_update_reservations_table');
 
 
 /**
- * Fonction utilitaire pour afficher les horaires d'ouverture dynamiques
+ * Fonction utilitaire pour afficher les horaires d'ouverture personnalisés
  */
 function le_margo_display_opening_hours($echo = true) {
-    $jours = array(
+    $days = [
         'monday'    => __('Lundi', 'le-margo'),
         'tuesday'   => __('Mardi', 'le-margo'),
         'wednesday' => __('Mercredi', 'le-margo'),
@@ -237,18 +312,21 @@ function le_margo_display_opening_hours($echo = true) {
         'friday'    => __('Vendredi', 'le-margo'),
         'saturday'  => __('Samedi', 'le-margo'),
         'sunday'    => __('Dimanche', 'le-margo'),
-    );
-    $horaires = get_option('le_margo_opening_hours');
-    $out = '<ul class="horaires-restaurant">';
-    foreach ($jours as $key => $label) {
-        $val = isset($horaires[$key]) ? $horaires[$key] : '';
-        $out .= '<li><strong>' . $label . ' :</strong> ' . ($val ? esc_html($val) : '<span style="color:#aaa">Fermé</span>') . '</li>';
+    ];
+    
+    $opening_hours = get_option('le_margo_opening_hours', []);
+    
+    $output = '<ul class="horaires-restaurant">';
+    foreach ($days as $day_key => $day_label) {
+        $hours_text = !empty($opening_hours[$day_key]) ? esc_html($opening_hours[$day_key]) : '<span class="closed-text">' . __('Fermé', 'le-margo') . '</span>';
+        $output .= '<li><strong>' . esc_html($day_label) . ' :</strong> ' . $hours_text . '</li>';
     }
-    $out .= '</ul>';
+    $output .= '</ul>';
+
     if ($echo) {
-        echo $out;
+        echo $output;
     } else {
-        return $out;
+        return $output;
     }
 }
 
@@ -581,355 +659,8 @@ add_filter('parse_query', 'le_margo_testimonial_parse_query');
  * ===============================================
  */
 
-// 1. Schema.org Markup pour Restaurant
-function le_margo_add_schema_markup() {
-    if (is_front_page() || is_page('a-propos') || is_page('reserver')) {
-        $schema = array(
-            '@context' => 'https://schema.org',
-            '@type' => 'Restaurant',
-            'name' => 'Le Margo',
-            'description' => 'Restaurant gastronomique à Eymet, cuisine locale et vins naturels. Produits frais bio du Périgord dans une ambiance intimiste.',
-            'url' => home_url(),
-            'logo' => get_template_directory_uri() . '/assets/images/le-margo-logo.png',
-            'image' => array(
-                get_template_directory_uri() . '/assets/images/restaurant-exterieur-eymet.jpg',
-                get_template_directory_uri() . '/assets/images/plat-signature-lemargo.webp',
-                get_template_directory_uri() . '/assets/images/restaurant-interieur-ambiance.jpg'
-            ),
-            'telephone' => '+33602556315',
-            'email' => 'sasdamaeymet@gmail.com',
-            'priceRange' => '€€',
-            'currenciesAccepted' => 'EUR',
-            'paymentAccepted' => 'Cash, Credit Card',
-            'address' => array(
-                '@type' => 'PostalAddress',
-                'streetAddress' => '6 avenue du 6 juin 1944',
-                'addressLocality' => 'Eymet',
-                'addressRegion' => 'Dordogne',
-                'postalCode' => '24500',
-                'addressCountry' => 'FR'
-            ),
-            'geo' => array(
-                '@type' => 'GeoCoordinates',
-                'latitude' => '44.66685638628374',
-                'longitude' => '0.3969304765728053'
-            ),
-            'openingHours' => array(
-                'Mo-We off',
-                'Th 09:00-15:00,19:00-23:00',
-                'Fr 19:00-23:00',
-                'Sa 19:00-23:00',
-                'Su off'
-            ),
-            'servesCuisine' => array(
-                'French',
-                'Contemporary',
-                'Local',
-                'Organic',
-                'Seasonal'
-            ),
-            'hasMenu' => array(
-                '@type' => 'Menu',
-                'name' => 'Menu du jour',
-                'description' => 'Menu saisonnier avec produits locaux bio'
-            ),
-            'aggregateRating' => array(
-                '@type' => 'AggregateRating',
-                'ratingValue' => '4.8',
-                'reviewCount' => '47',
-                'bestRating' => '5'
-            ),
-            'founder' => array(
-                array(
-                    '@type' => 'Person',
-                    'name' => 'Antoine Bursens'
-                ),
-                array(
-                    '@type' => 'Person',
-                    'name' => 'Floriane Valladon'
-                )
-            ),
-            'specialities' => array(
-                'Cuisine créative',
-                'Produits locaux',
-                'Vins naturels',
-                'Cuisine bio',
-                'Terroir du Périgord'
-            ),
-            'amenityFeature' => array(
-                array(
-                    '@type' => 'LocationFeatureSpecification',
-                    'name' => 'Wifi',
-                    'value' => true
-                ),
-                array(
-                    '@type' => 'LocationFeatureSpecification',
-                    'name' => 'Terrasse',
-                    'value' => true
-                ),
-                array(
-                    '@type' => 'LocationFeatureSpecification',
-                    'name' => 'Parking',
-                    'value' => true
-                )
-            ),
-            'sameAs' => array(
-                'https://instagram.com/lemargoeymet',
-                'https://www.facebook.com/lemargoeymet'
-            )
-        );
-        
-        echo '<script type="application/ld+json">' . json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>';
-    }
-}
-add_action('wp_head', 'le_margo_add_schema_markup');
-
-// 2. Breadcrumbs SEO
-function le_margo_breadcrumbs() {
-    $schema = array(
-        '@context' => 'https://schema.org',
-        '@type' => 'BreadcrumbList',
-        'itemListElement' => array()
-    );
-    
-    $position = 1;
-    
-    // Home
-    $schema['itemListElement'][] = array(
-        '@type' => 'ListItem',
-        'position' => $position++,
-        'name' => 'Accueil',
-        'item' => home_url()
-    );
-    
-    if (is_page()) {
-        $schema['itemListElement'][] = array(
-            '@type' => 'ListItem',
-            'position' => $position,
-            'name' => get_the_title(),
-            'item' => get_permalink()
-        );
-    }
-    
-    echo '<script type="application/ld+json">' . json_encode($schema) . '</script>';
-}
-add_action('wp_head', 'le_margo_breadcrumbs');
-
-// 3. Méta-descriptions optimisées
-function le_margo_seo_meta_description() {
-    $description = '';
-    
-    if (is_front_page()) {
-        $description = 'Restaurant Le Margo à Eymet (Dordogne) - Cuisine locale créative, vins naturels, produits bio du Périgord. Réservation 06 02 55 63 15. Meilleur restaurant Eymet 2024.';
-    } elseif (is_page('a-propos')) {
-        $description = 'Découvrez l\'histoire du restaurant Le Margo à Eymet : Antoine Bursens et Floriane Valladon, cuisine créative avec produits locaux bio du Périgord. Restaurant gastronomique Dordogne.';
-    } elseif (is_page('galerie')) {
-        $description = 'Photos du restaurant Le Margo Eymet : plats gastronomiques, vins naturels, ambiance restaurant. Découvrez notre cuisine créative locale en images.';
-    } elseif (is_page('eymet')) {
-        $description = 'Découvrez Eymet, bastide médiévale de Dordogne (1270). Le Margo vous guide dans cette perle du Périgord : château, place centrale, rivière Dropt, marché traditionnel.';
-    } elseif (is_page('reserver')) {
-        $description = 'Réservez votre table au restaurant Le Margo Eymet. Restaurant gastronomique Dordogne, cuisine locale bio, vins naturels. Réservation en ligne ou 06 02 55 63 15.';
-    }
-    
-    if (!empty($description)) {
-        echo '<meta name="description" content="' . esc_attr($description) . '">';
-    }
-}
-add_action('wp_head', 'le_margo_seo_meta_description', 1);
-
-// 4. Open Graph et Twitter Cards
-function le_margo_social_meta_tags() {
-    $title = '';
-    $description = '';
-    $image = get_template_directory_uri() . '/assets/images/restaurant-exterieur-eymet.jpg';
-    
-    if (is_front_page()) {
-        $title = 'Le Margo - Restaurant Gastronomique Eymet Dordogne | Cuisine Locale & Vins Naturels';
-        $description = 'Restaurant Le Margo à Eymet : cuisine créative avec produits locaux bio, vins naturels, ambiance intimiste. Réservez au 06 02 55 63 15.';
-    } elseif (is_page()) {
-        $title = get_the_title() . ' - Le Margo Restaurant Eymet';
-        $description = get_the_excerpt() ?: 'Restaurant Le Margo Eymet - Cuisine locale créative et vins naturels';
-    }
-    
-    // Open Graph
-    echo '<meta property="og:title" content="' . esc_attr($title) . '">';
-    echo '<meta property="og:description" content="' . esc_attr($description) . '">';
-    echo '<meta property="og:image" content="' . esc_url($image) . '">';
-    echo '<meta property="og:url" content="' . esc_url(get_permalink()) . '">';
-    echo '<meta property="og:type" content="website">';
-    echo '<meta property="og:site_name" content="Le Margo">';
-    echo '<meta property="og:locale" content="fr_FR">';
-    
-    // Twitter Card
-    echo '<meta name="twitter:card" content="summary_large_image">';
-    echo '<meta name="twitter:title" content="' . esc_attr($title) . '">';
-    echo '<meta name="twitter:description" content="' . esc_attr($description) . '">';
-    echo '<meta name="twitter:image" content="' . esc_url($image) . '">';
-    echo '<meta name="twitter:site" content="@lemargoeymet">';
-}
-add_action('wp_head', 'le_margo_social_meta_tags', 2);
-
-// 5. Génération de sitemap XML personnalisé
-function le_margo_generate_sitemap() {
-    if (isset($_GET['sitemap']) && $_GET['sitemap'] === 'lemargo') {
-        header('Content-Type: application/xml; charset=utf-8');
-        
-        $sitemap = '<?xml version="1.0" encoding="UTF-8"?>';
-        $sitemap .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-        
-        // Pages principales
-        $pages = array(
-            '' => array('priority' => '1.0', 'changefreq' => 'weekly'),
-            'a-propos' => array('priority' => '0.8', 'changefreq' => 'monthly'),
-            'galerie' => array('priority' => '0.7', 'changefreq' => 'monthly'),
-            'eymet' => array('priority' => '0.9', 'changefreq' => 'monthly'),
-            'reserver' => array('priority' => '0.9', 'changefreq' => 'daily')
-        );
-        
-        foreach ($pages as $slug => $config) {
-            $url = home_url($slug ? '/' . $slug : '');
-            $sitemap .= '<url>';
-            $sitemap .= '<loc>' . $url . '</loc>';
-            $sitemap .= '<lastmod>' . date('Y-m-d') . '</lastmod>';
-            $sitemap .= '<changefreq>' . $config['changefreq'] . '</changefreq>';
-            $sitemap .= '<priority>' . $config['priority'] . '</priority>';
-            $sitemap .= '</url>';
-        }
-        
-        $sitemap .= '</urlset>';
-        echo $sitemap;
-        exit;
-    }
-}
-add_action('init', 'le_margo_generate_sitemap');
-
-// 6. Mots-clés locaux pour le SEO
-function le_margo_add_local_keywords() {
-    $keywords = array(
-        'restaurant Eymet',
-        'restaurant Dordogne',
-        'restaurant Périgord',
-        'gastronomie Eymet',
-        'cuisine locale Dordogne',
-        'vins naturels Eymet',
-        'restaurant bio Périgord',
-        'Le Margo',
-        'bastide médiévale restaurant',
-        'Antoine Bursens',
-        'Floriane Valladon',
-        'produits locaux Dordogne',
-        'meilleur restaurant Eymet',
-        'restaurant gastronomique 24500'
-    );
-    
-    echo '<meta name="keywords" content="' . implode(', ', $keywords) . '">';
-}
-add_action('wp_head', 'le_margo_add_local_keywords', 3);
-
-// 7. Optimisation des images pour le SEO
-function le_margo_optimize_images() {
-    // Ajouter des attributs alt automatiques pour les images sans alt
-    add_filter('the_content', function($content) {
-        $content = preg_replace_callback('/<img[^>]+>/i', function($matches) {
-            $img = $matches[0];
-            if (strpos($img, 'alt=') === false) {
-                $img = str_replace('<img', '<img alt="Restaurant Le Margo Eymet - Cuisine locale"', $img);
-            }
-            return $img;
-        }, $content);
-        return $content;
-    });
-}
-add_action('init', 'le_margo_optimize_images');
-
-// 8. Données structurées pour les événements
-function le_margo_events_schema() {
-    if (is_page('eymet') || is_front_page()) {
-        $events = array(
-            array(
-                '@type' => 'Event',
-                'name' => 'Marché traditionnel d\'Eymet',
-                'description' => 'Marché hebdomadaire avec produits locaux sur la place centrale d\'Eymet',
-                'location' => array(
-                    '@type' => 'Place',
-                    'name' => 'Place Centrale Eymet',
-                    'address' => 'Place Centrale, 24500 Eymet, France'
-                ),
-                'startDate' => 'every Thursday 08:00',
-                'organizer' => array(
-                    '@type' => 'Organization',
-                    'name' => 'Ville d\'Eymet'
-                )
-            ),
-            array(
-                '@type' => 'Event',
-                'name' => 'Wine Tasting avec Emma Jenkins',
-                'description' => 'Dégustation de vins naturels tous les mardis soirs au restaurant Le Margo',
-                'location' => array(
-                    '@type' => 'Restaurant',
-                    'name' => 'Le Margo',
-                    'address' => '6 avenue du 6 juin 1944, 24500 Eymet, France'
-                ),
-                'startDate' => 'every Tuesday 19:00',
-                'organizer' => array(
-                    '@type' => 'Organization',
-                    'name' => 'Le Margo'
-                )
-            )
-        );
-        
-        foreach ($events as $event) {
-            echo '<script type="application/ld+json">' . json_encode($event) . '</script>';
-        }
-    }
-}
-add_action('wp_head', 'le_margo_events_schema');
-
-// 9. Optimisation pour Google My Business
-function le_margo_business_schema() {
-    $business = array(
-        '@context' => 'https://schema.org',
-        '@type' => 'LocalBusiness',
-        'name' => 'Le Margo',
-        'image' => get_template_directory_uri() . '/assets/images/restaurant-exterieur-eymet.jpg',
-        'telephone' => '+33602556315',
-        'email' => 'sasdamaeymet@gmail.com',
-        'address' => array(
-            '@type' => 'PostalAddress',
-            'streetAddress' => '6 avenue du 6 juin 1944',
-            'addressLocality' => 'Eymet',
-            'addressRegion' => 'Nouvelle-Aquitaine',
-            'postalCode' => '24500',
-            'addressCountry' => 'France'
-        ),
-        'geo' => array(
-            '@type' => 'GeoCoordinates',
-            'latitude' => 44.66685638628374,
-            'longitude' => 0.3969304765728053
-        ),
-        'url' => home_url(),
-        'priceRange' => '€€',
-        'openingHours' => 'Th-Sa',
-        'smokingAllowed' => false,
-        'wheelchairAccessible' => true
-    );
-    
-    echo '<script type="application/ld+json">' . json_encode($business) . '</script>';
-}
-add_action('wp_head', 'le_margo_business_schema');
-
-// 10. Optimisation pour Core Web Vitals
-function le_margo_performance_optimization() {
-    // Précharger les ressources critiques
-    echo '<link rel="preload" href="' . get_template_directory_uri() . '/assets/css/main.css" as="style">';
-    echo '<link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" as="style">';
-    
-    // DNS prefetch pour les domaines externes
-    echo '<link rel="dns-prefetch" href="//fonts.googleapis.com">';
-    echo '<link rel="dns-prefetch" href="//www.google.com">';
-    echo '<link rel="dns-prefetch" href="//instagram.com">';
-}
-add_action('wp_head', 'le_margo_performance_optimization', 1);
+// Toutes les fonctions SEO statiques ont été supprimées - remplacées par le système dynamique seo-auto-config.php
+// Seules les meta données configurées depuis l'admin des pages sont maintenant utilisées
 
 // Ajout de la page d'options pour le mode maintenance
 function le_margo_maintenance_admin_menu() {
@@ -1159,3 +890,33 @@ function le_margo_redirect_with_error($error_code, $log_message) {
     wp_safe_redirect($redirect_url);
     exit;
 }
+
+/**
+ * Ajouter les headers de sécurité
+ * TEMPORAIREMENT DÉSACTIVÉ POUR TESTER GA4
+ */
+function le_margo_security_headers() {
+    // Fonction désactivée temporairement pour debug GA4
+    return;
+    
+    if (!is_admin()) {
+        // Protection contre le clickjacking
+        header('X-Frame-Options: SAMEORIGIN');
+        
+        // Protection XSS
+        header('X-XSS-Protection: 1; mode=block');
+        
+        // Protection contre le MIME-type sniffing
+        header('X-Content-Type-Options: nosniff');
+        
+        // Politique de sécurité du contenu - TRÈS PERMISSIVE pour GA4
+        header("Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:; connect-src 'self' https: wss: data: blob:; img-src 'self' data: https: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:;");
+        
+        // Référer Policy
+        header('Referrer-Policy: strict-origin-when-cross-origin');
+        
+        // Permissions Policy
+        header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
+    }
+}
+add_action('send_headers', 'le_margo_security_headers');

@@ -55,7 +55,6 @@ function le_margo_todays_reservations_widget() {
     echo '<thead>';
     echo '<tr>';
     echo '<th>' . esc_html__('Heure', 'le-margo') . '</th>';
-    echo '<th>' . esc_html__('Service', 'le-margo') . '</th>';
     echo '<th>' . esc_html__('Personnes', 'le-margo') . '</th>';
     echo '<th>' . esc_html__('Statut', 'le-margo') . '</th>';
     echo '</tr>';
@@ -67,16 +66,12 @@ function le_margo_todays_reservations_widget() {
         $time_obj = new DateTime($reservation->reservation_time);
         $formatted_time = $time_obj->format('H:i');
         
-        // Type de repas
-        $meal_type = $reservation->meal_type === 'lunch' ? __('Déjeuner', 'le-margo') : __('Dîner', 'le-margo');
-        
         // Statut
         $status_label = $reservation->status === 'pending' ? __('En attente', 'le-margo') : __('Confirmé', 'le-margo');
         $status_style = $reservation->status === 'pending' ? 'color: #f39c12;' : 'color: #27ae60;';
         
         echo '<tr>';
         echo '<td>' . esc_html($formatted_time) . '</td>';
-        echo '<td>' . esc_html($meal_type) . '</td>';
         echo '<td>' . esc_html($reservation->people) . '</td>';
         echo '<td><span style="' . esc_attr($status_style) . '">' . esc_html($status_label) . '</span></td>';
         echo '</tr>';
@@ -120,7 +115,6 @@ function le_margo_upcoming_reservations_widget() {
     echo '<tr>';
     echo '<th>' . esc_html__('Date', 'le-margo') . '</th>';
     echo '<th>' . esc_html__('Heure', 'le-margo') . '</th>';
-    echo '<th>' . esc_html__('Service', 'le-margo') . '</th>';
     echo '<th>' . esc_html__('Personnes', 'le-margo') . '</th>';
     echo '</tr>';
     echo '</thead>';
@@ -135,13 +129,9 @@ function le_margo_upcoming_reservations_widget() {
         $time_obj = new DateTime($reservation->reservation_time);
         $formatted_time = $time_obj->format('H:i');
         
-        // Type de repas
-        $meal_type = $reservation->meal_type === 'lunch' ? __('Déjeuner', 'le-margo') : __('Dîner', 'le-margo');
-        
         echo '<tr>';
         echo '<td>' . esc_html($formatted_date) . '</td>';
         echo '<td>' . esc_html($formatted_time) . '</td>';
-        echo '<td>' . esc_html($meal_type) . '</td>';
         echo '<td>' . esc_html($reservation->people) . '</td>';
         echo '</tr>';
     }

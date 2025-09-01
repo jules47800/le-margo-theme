@@ -81,10 +81,10 @@ if (!empty($jours_ouverts)) {
     <div class="intro-cards-container">
         <div class="gallery-item hero-card">
             <div class="hero-card__content">
-                <h1 class="hero-card__title"><?php echo esc_html(get_theme_mod('le_margo_restaurant_name', 'Le Margo')); ?></h1>
-                <p class="hero-card__description">Restaurant Bistronomique à Eymet, Dordogne</p>
+                <h1 class="hero-card__title"><?php echo esc_html(get_theme_mod('le_margo_restaurant_name', __('Le Margo', 'le-margo'))); ?></h1>
+                <p class="hero-card__description"><?php _e('Restaurant Bistronomique à Eymet, Dordogne', 'le-margo'); ?></p>
                 <p class="hero-card__subtitle">
-                    Découvrez une cuisine locale et créative, élaborée à partir de produits frais et bio du Périgord, accompagnée d'une sélection de vins naturels.
+                    <?php _e("Découvrez une cuisine locale et créative, élaborée à partir de produits frais et bio du Périgord, accompagnée d'une sélection de vins naturels.", 'le-margo'); ?>
                 </p>
                 
             </div>
@@ -105,8 +105,8 @@ if (!empty($jours_ouverts)) {
                             }
                             ?>
                         <?php endif; ?>
-                        <a href="<?php echo home_url('/reserver/'); ?>">Réserver</a>
-                        <a href="<?php echo esc_url(get_theme_mod('le_margo_instagram_url', 'https://instagram.com/lemargoeymet')); ?>" target="_blank" rel="noopener">Instagram</a>
+                        <a href="<?php echo home_url('/reserver/'); ?>"><?php _e('Réserver', 'le-margo'); ?></a>
+                        <a href="<?php echo esc_url(get_theme_mod('le_margo_instagram_url', 'https://instagram.com/lemargoeymet')); ?>" target="_blank" rel="noopener"><?php _e('Instagram', 'le-margo'); ?></a>
                     </div>
                 </div>
         </div>
@@ -165,7 +165,7 @@ if (!empty($jours_ouverts)) {
             }
         } else {
             // Contenu de secours si la galerie est vide
-            echo '<p>Veuillez configurer votre galerie dans les réglages du thème.</p>';
+            echo '<p>' . __('Veuillez configurer votre galerie dans les réglages du thème.', 'le-margo') . '</p>';
         }
         ?>
     </div>

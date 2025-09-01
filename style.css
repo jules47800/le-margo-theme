@@ -74,6 +74,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Section for intro cards */
 .intro-cards-section {
     padding: 20px 20px 0; /* Ajout d'un padding en haut et sur les côtés */
+    padding-top: 54px;
     background: var(--color-beige);
 }
 
@@ -547,6 +548,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Suppression des styles WordPress par défaut */
 .site-main {
     margin-top: 0;
+    padding: 54px;
 }
 
 /* Utilitaires */
@@ -753,4 +755,58 @@ h1, h2, h3, h4, h5, h6 {
 
 .back-home-link .home-button:hover {
     color: var(--color-black);
+}
+
+/* ----------------------------------------------------------------
+ * Bannière de cookies (CookieYes)
+ * ---------------------------------------------------------------- */
+
+/* Conteneur principal de la bannière */
+#cookie-law-info-bar {
+    background-color: var(--color-beige) !important;
+    color: var(--color-primary) !important;
+    padding: 20px 25px !important;
+    font-family: var(--font-primary) !important;
+    border-top: 1px solid var(--color-beige-dark) !important;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08) !important;
+}
+
+/* Texte de la bannière */
+#cookie-law-info-bar .cli-plugin-main-message {
+    font-size: 1rem !important;
+    line-height: 1.6;
+}
+
+/* Boutons */
+#cookie-law-info-bar .cli-plugin-button {
+    background-color: var(--color-dark-brown) !important;
+    color: var(--color-white) !important;
+    border-radius: 5px !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background-color 0.3s ease;
+    border: 1px solid var(--color-dark-brown) !important;
+    margin: 5px 10px !important;
+}
+
+/* Bouton "Accepter" au survol */
+#cookie-law-info-bar .cli-plugin-button:hover {
+    background-color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+}
+
+/* Lien "En savoir plus" ou "Politique de confidentialité" */
+#cookie-law-info-bar .cli-plugin-main-link {
+    color: var(--color-primary) !important;
+    text-decoration: underline !important;
+    font-weight: normal !important;
+    background-color: transparent !important;
+}
+
+#cookie-law-info-bar .cli-plugin-main-link:hover {
+    color: #000000 !important;
+    background-color: transparent !important;
 } 

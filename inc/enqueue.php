@@ -60,7 +60,8 @@ function le_margo_enqueue_assets($hook = '') {
             'restaurant_capacity' => intval(get_option('le_margo_restaurant_capacity', 4)),
             'daily_schedule' => get_option('le_margo_daily_schedule', array()),
             'holiday_dates' => get_option('le_margo_holiday_dates', ''), // Ajout des dates de vacances
-            'version' => '2.1.0' 
+            'version' => '2.1.0',
+            'restaurant_phone' => get_theme_mod('le_margo_restaurant_phone', '05 53 00 00 00')
         ));
     }
 

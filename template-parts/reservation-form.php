@@ -28,13 +28,13 @@
 
         <div class="form-row">
             <div class="form-field">
-                <label for="date">Date</label>
-                <input type="text" id="date" name="date" class="datepicker" placeholder="JJ/MM/AAAA" required readonly>
+                <label for="date"><?php _e('Date', 'le-margo'); ?></label>
+                <input type="text" id="date" name="date" class="datepicker" placeholder="<?php _e('JJ/MM/AAAA', 'le-margo'); ?>" required readonly>
             </div>
             <div class="form-field">
-                <label for="time">Horaire</label>
+                <label for="time"><?php _e('Horaire', 'le-margo'); ?></label>
                 <select id="time" name="time" required disabled>
-                    <option value="">Choisissez d'abord une date</option>
+                    <option value=""><?php _e('Choisissez d\'abord une date', 'le-margo'); ?></option>
                 </select>
                 <div class="time-availability"></div>
             </div>
@@ -42,9 +42,9 @@
 
         <div class="form-row">
             <div class="form-field">
-                <label for="people">Personnes</label>
+                <label for="people"><?php _e('Personnes', 'le-margo'); ?></label>
                 <select id="people" name="people" required>
-                    <option value="" disabled selected>Sélectionnez...</option>
+                    <option value="" disabled selected><?php _e('Sélectionnez...', 'le-margo'); ?></option>
                     <?php for ($i = 1; $i <= 10; $i++) : ?>
                         <option value="<?php echo $i; ?>"><?php echo $i; ?> <?php echo $i > 1 ? esc_html__('personnes', 'le-margo') : esc_html__('personne', 'le-margo'); ?></option>
                     <?php endfor; ?>
@@ -63,49 +63,57 @@
 
         <div class="form-row">
             <div class="form-field">
-                <label for="customer_name">Nom</label>
-                <input type="text" id="customer_name" name="customer_name" placeholder="Nom et prénom" required>
+                <label for="customer_name"><?php _e('Nom', 'le-margo'); ?></label>
+                <input type="text" id="customer_name" name="customer_name" placeholder="<?php _e('Nom et prénom', 'le-margo'); ?>" required>
             </div>
             <div class="form-field">
-                <label for="customer_phone">Téléphone</label>
-                <input type="tel" id="customer_phone" name="customer_phone" placeholder="Pour vous contacter" required>
+                <label for="customer_phone"><?php _e('Téléphone', 'le-margo'); ?></label>
+                <input type="tel" id="customer_phone" name="customer_phone" placeholder="<?php _e('Pour vous contacter', 'le-margo'); ?>" required>
             </div>
         </div>
 
         <div class="form-field full-width">
-            <label for="customer_email">Email</label>
-            <input type="email" id="customer_email" name="customer_email" placeholder="Pour confirmation" required>
+            <label for="customer_email"><?php _e('Email', 'le-margo'); ?></label>
+            <input type="email" id="customer_email" name="customer_email" placeholder="<?php _e('Pour confirmation', 'le-margo'); ?>" required>
         </div>
 
         <div class="form-field full-width">
             <div class="reservation-extra-info">
-                <strong>Allergies ou végétarien ?</strong> — Merci de préciser toute allergie ou demande végétarienne dans les notes. Nous adaptons nos plats avec plaisir !
+                <strong><?php _e('Allergies ou végétarien ?', 'le-margo'); ?></strong> — <?php _e('Merci de préciser toute allergie ou demande végétarienne dans les notes. Nous adaptons nos plats avec plaisir !', 'le-margo'); ?>
             </div>
-            <label for="notes">Notes spéciales (optionnel)</label>
-            <textarea id="notes" name="notes" placeholder="Allergies, occasion spéciale..."></textarea>
+            <label for="notes"><?php _e('Notes spéciales (optionnel)', 'le-margo'); ?></label>
+            <textarea id="notes" name="notes" placeholder="<?php _e('Allergies, occasion spéciale...', 'le-margo'); ?>"></textarea>
         </div>
 
-        <div class="form-checkboxes">
-            <label class="checkbox-label">
-                <input type="checkbox" id="consent_data_processing" name="consent_data_processing" value="1" required>
-                <span class="checkmark"></span>
-                J'accepte que mes données personnelles soient collectées et traitées conformément à la politique de confidentialité. <span class="required">*</span>
-            </label>
-            <label class="checkbox-label">
-                <input type="checkbox" id="consent_data_storage" name="consent_data_storage" value="1" required>
-                <span class="checkmark"></span>
-                Je consens à ce que mes informations soient enregistrées pour le programme de fidélité du restaurant. <span class="required">*</span>
-            </label>
-            <p class="consent-info">Nous enregistrons votre historique de visites pour identifier nos clients fidèles (statut VIP après 5 visites).</p>
-            <label class="checkbox-label">
+        <div class="form-section-divider"></div>
+
+        <div class="form-checkboxes rgpd-section">
+            <h4 class="rgpd-title"><?php _e('Préférences & Consentement', 'le-margo'); ?></h4>
+            
+            <label class="checkbox-label" for="accept_reminder">
                 <input type="checkbox" id="accept_reminder" name="accept_reminder" value="1" checked>
                 <span class="checkmark"></span>
-                Recevoir un rappel par email 1h30 avant ma réservation
+                <?php _e('Recevoir un rappel par email avant ma réservation', 'le-margo'); ?>
             </label>
-            <label class="checkbox-label">
+            
+            <label class="checkbox-label" for="newsletter">
                 <input type="checkbox" id="newsletter" name="newsletter" value="1">
                 <span class="checkmark"></span>
-                S'inscrire à notre newsletter pour recevoir nos actualités et offres spéciales
+                <?php _e('S\'inscrire à notre newsletter pour nos actualités et offres', 'le-margo'); ?>
+            </label>
+            
+            <div class="form-section-divider-small"></div>
+
+            <label class="checkbox-label" for="consent_data_processing">
+                <input type="checkbox" id="consent_data_processing" name="consent_data_processing" value="1" required>
+                <span class="checkmark"></span>
+                <?php 
+                $privacy_policy_url = get_privacy_policy_url();
+                printf(
+                    wp_kses_post(__('J\'ai lu et j\'accepte la <a href="%s" target="_blank">politique de confidentialité</a> du site.*', 'le-margo')),
+                    esc_url($privacy_policy_url)
+                );
+                ?>
             </label>
         </div>
 
@@ -114,10 +122,14 @@
         </div>
 
         <div class="gdpr-notice">
-            <p>En soumettant ce formulaire, vous acceptez notre <a href="/politique-confidentialite" target="_blank">politique de confidentialité</a>. Vous pouvez à tout moment exercer vos droits RGPD via notre <a href="/suppression-donnees" target="_blank">formulaire de suppression de données</a>.</p>
+            <p><?php printf(
+                wp_kses_post(__('En soumettant ce formulaire, vous acceptez notre <a href="%1$s" target="_blank">politique de confidentialité</a>. Vous pouvez à tout moment exercer vos droits RGPD via notre <a href="%2$s" target="_blank">formulaire de suppression de données</a>.', 'le-margo')),
+                home_url('/politique-confidentialite'),
+                home_url('/suppression-donnees')
+            ); ?></p>
         </div>
 
-        <button type="submit" class="reserve-btn" disabled>Réservez votre table</button>
+        <button type="submit" class="reserve-btn" disabled><?php _e('Réservez votre table', 'le-margo'); ?></button>
         <div class="reservation-response" style="display: none;"></div>
     </form>
 </div>

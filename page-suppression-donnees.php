@@ -19,9 +19,18 @@ if (isset($_POST['delete_data_submitted']) && isset($_POST['delete_data_nonce'])
         $form_submitted = true;
         $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
         
-        if (empty($email)) {
+        // Rate limiting
+        $ip = Le_Margo_Security::get_client_ip();
+        $rate_limiter = Le_Margo_Rate_Limiter::get_instance();
+        
+        if (!$rate_limiter->check_rate_limit($ip)) {
+            $error = true;
+            $error_message = __('Trop de tentatives. Veuillez réessayer dans une heure.', 'le-margo');
+            Le_Margo_Error_Messages::log_error('rate_limit', "IP: $ip");
+        } elseif (empty($email) || !Le_Margo_Security::validate_email($email)) {
             $error = true;
             $error_message = __('Veuillez fournir une adresse email valide.', 'le-margo');
+            Le_Margo_Error_Messages::log_error('invalid_email', "Email: $email");
         } else {
             // Rechercher le client dans la base de données
             global $wpdb;
@@ -36,79 +45,53 @@ if (isset($_POST['delete_data_submitted']) && isset($_POST['delete_data_nonce'])
             if (!$customer) {
                 $error = true;
                 $error_message = __('Aucun client trouvé avec cette adresse email.', 'le-margo');
+                Le_Margo_Error_Messages::log_error('customer_not_found', "Email: $email");
             } else {
-                // Supprimer les données
-                $wpdb->delete($customers_table, array('email' => $email));
-                
                 // Anonymiser les réservations
                 $wpdb->update(
                     $reservations_table,
                     array(
-                        'customer_name' => __('Anonyme', 'le-margo'),
-                        'customer_email' => 'deleted@example.com',
-                        'customer_phone' => '0000000000',
-                        'newsletter' => 0
+                        'customer_name' => 'Anonyme',
+                        'customer_email' => null,
+                        'customer_phone' => null,
+                        'notes' => null
                     ),
-                    array('customer_email' => $email)
+                    array('customer_email' => $email),
+                    array('%s', '%s', '%s', '%s'),
+                    array('%s')
                 );
                 
-                // Envoyer un email de confirmation
-                $subject = __('Confirmation de suppression de vos données - Le Margo', 'le-margo');
-                $message = sprintf(
-                    __('Bonjour,
-
-Nous vous confirmons que vos données personnelles ont été supprimées de notre base de données conformément au RGPD.
-
-Les données suivantes ont été effacées :
-- Votre nom et coordonnées
-- Votre historique de visites
-- Vos préférences
-
-Vos anciennes réservations ont été anonymisées pour des raisons statistiques et de gestion.
-
-Nous vous remercions d\'avoir fréquenté Le Margo et espérons vous revoir dans d\'autres circonstances.
-
-Cordialement,
-L\'équipe du Margo', 'le-margo'),
-                    $customer->name
-                );
-                $headers = array('Content-Type: text/plain; charset=UTF-8');
-                
-                $mail_sent = wp_mail($email, $subject, $message, $headers);
+                // Supprimer les statistiques client
+                $wpdb->delete($customers_table, array('email' => $email), array('%s'));
                 
                 $success = true;
+                Le_Margo_Error_Messages::log_error('data_deleted', "Email: $email - Données supprimées avec succès");
             }
         }
     } else {
         $error = true;
         $error_message = __('Erreur de sécurité. Veuillez réessayer.', 'le-margo');
+        Le_Margo_Error_Messages::log_error('security_error', "Nonce invalide");
     }
 }
 ?>
 
-<main id="primary" class="site-main">
-    <div class="page-header">
-        <div class="container">
-            <h1 class="page-title"><?php esc_html_e('Demande de Suppression de Vos Données', 'le-margo'); ?></h1>
-        </div>
-    </div>
-
-    <div class="page-content">
-        <div class="container">
-            <div class="data-deletion-content">
-                <?php if ($form_submitted && $success) : ?>
+<main id="main" class="site-main">
+    <div class="container">
+        <div class="content-area">
+            <div class="page-content">
+                <?php if ($success): ?>
                     <div class="success-message">
-                        <p><?php esc_html_e('Votre demande de suppression de données a été traitée avec succès. Un email de confirmation vous a été envoyé.', 'le-margo'); ?></p>
-                        <p><?php esc_html_e('Toutes vos informations personnelles et votre historique de visites ont été supprimés de notre base de données.', 'le-margo'); ?></p>
-                        <p><a href="<?php echo esc_url(home_url()); ?>"><?php esc_html_e('Retour à l\'accueil', 'le-margo'); ?></a></p>
+                        <h2><?php esc_html_e('Données supprimées avec succès', 'le-margo'); ?></h2>
+                        <p><?php esc_html_e('Vos données personnelles ont été supprimées de notre base de données.', 'le-margo'); ?></p>
+                        <p><?php esc_html_e('Vos anciennes réservations ont été anonymisées.', 'le-margo'); ?></p>
+                        <p><a href="<?php echo esc_url(home_url('/')); ?>"><?php esc_html_e('Retour à l\'accueil', 'le-margo'); ?></a></p>
                     </div>
-                <?php else : ?>
-                    <?php if ($error) : ?>
-                        <div class="error-message">
-                            <p><?php echo esc_html($error_message); ?></p>
-                        </div>
-                    <?php endif; ?>
-
+                <?php elseif ($error): ?>
+                    <div class="error-message">
+                        <?php echo Le_Margo_Error_Messages::display_error($error_message); ?>
+                    </div>
+                <?php else: ?>
                     <div class="deletion-info">
                         <h2><?php esc_html_e('Exercez votre droit à l\'oubli', 'le-margo'); ?></h2>
                         <p><?php esc_html_e('Conformément au Règlement Général sur la Protection des Données (RGPD), vous pouvez demander la suppression de vos données personnelles de notre base de données.', 'le-margo'); ?></p>
@@ -146,5 +129,4 @@ L\'équipe du Margo', 'le-margo'),
     </div>
 </main>
 
-<?php
-get_footer(); 
+<?php get_footer(); ?> 

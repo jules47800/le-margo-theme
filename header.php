@@ -26,7 +26,98 @@
 	<!-- Favicon -->
 	<link rel="icon" type="image/x-icon" href="<?php echo get_template_directory_uri(); ?>/assets/images/favicon.ico">
 
+	<!-- Debug Site Kit -->
+	<?php 
+	if (function_exists('googlesitekit_activation_notice')) {
+		echo "<!-- Site Kit est activé -->\n";
+	} else {
+		echo "<!-- Site Kit n'est pas activé -->\n";
+	}
+	?>
+
+	<!-- 
+	CODE GA4 MANUEL DE TEST (à décommenter si nécessaire) :
+	
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-VOTRE-ID-ICI"></script>
+	<script>
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-VOTRE-ID-ICI');
+	</script>
+	-->
+
 	<?php wp_head(); ?>
+	
+	<!-- Test de présence de Google Analytics -->
+	<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		// Vérifier si gtag est disponible
+		if (typeof gtag === 'function') {
+			console.log('✅ gtag est chargé et fonctionnel');
+			
+			// Envoyer un événement de test
+			gtag('event', 'page_view_test', {
+				'custom_parameter': 'test_from_lemargo'
+			});
+		} else {
+			console.log('❌ gtag n\'est pas chargé');
+		}
+		
+		// Vérifier si Google Analytics est détecté
+		if (typeof ga === 'function') {
+			console.log('✅ ga (Universal Analytics) détecté');
+		}
+		
+		// Vérifier si dataLayer existe
+		if (typeof dataLayer !== 'undefined') {
+			console.log('✅ dataLayer existe:', dataLayer);
+			
+			// Chercher l'ID de mesure dans dataLayer
+			dataLayer.forEach(function(item, index) {
+				if (item && item[0] === 'config' && item[1] && item[1].startsWith('G-')) {
+					console.log('🎯 ID de mesure GA4 trouvé:', item[1]);
+				}
+			});
+		} else {
+			console.log('❌ dataLayer n\'existe pas');
+		}
+		
+		// Vérifier les scripts GA4 chargés
+		const scripts = document.querySelectorAll('script[src*="googletagmanager.com"]');
+		if (scripts.length > 0) {
+			console.log('✅ Scripts GA4 détectés:', scripts.length);
+			scripts.forEach(script => console.log('Script:', script.src));
+		} else {
+			console.log('❌ Aucun script GA4 détecté');
+		}
+		
+		// Test de tracking manuel après 2 secondes
+		setTimeout(function() {
+			if (typeof gtag === 'function') {
+				console.log('🧪 Test de tracking manuel...');
+				gtag('event', 'manual_test', {
+					'event_category': 'Debug',
+					'event_label': 'Manual Test from Le Margo',
+					'custom_parameter': 'test_' + Date.now()
+				});
+				console.log('✅ Événement de test envoyé');
+				
+				// Vérifier si les requêtes sont bloquées
+				setTimeout(function() {
+					fetch('https://www.google-analytics.com/g/collect?v=2&tid=G-TEST&cid=test', {
+						method: 'POST',
+						mode: 'no-cors'
+					}).then(function() {
+						console.log('✅ Requêtes GA4 non bloquées');
+					}).catch(function(error) {
+						console.log('❌ Requêtes GA4 bloquées:', error);
+					});
+				}, 1000);
+			}
+		}, 2000);
+	});
+	</script>
 	
 	<style>
 		/* Header ultra-minimaliste */
@@ -132,6 +223,65 @@
 			background: rgba(255, 255, 255, 0.98);
 			box-shadow: 0 1px 20px rgba(0, 0, 0, 0.05);
 		}
+        .language-switcher {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-right: var(--spacing-lg);
+        }
+        .language-switcher a {
+            color: var(--color-text-light);
+            text-decoration: none;
+        }
+        .language-switcher .current-lang {
+            font-weight: var(--font-weight-bold);
+            color: var(--color-text);
+        }
+        .language-switcher .lang-separator {
+            display: none;
+        }
+
+        .flag-icon {
+            width: 24px;
+            height: 16px;
+            display: inline-block;
+            vertical-align: middle;
+            transition: var(--transition);
+            border-radius: 2px;
+            box-shadow: 0 0 2px rgba(0,0,0,0.15);
+        }
+
+        .language-switcher a .flag-icon {
+            filter: grayscale(1);
+            opacity: 0.6;
+        }
+
+        .language-switcher a:hover .flag-icon {
+            filter: grayscale(0);
+            opacity: 1;
+        }
+
+        .current-lang .flag-icon {
+            filter: grayscale(0);
+        }
+
+        .header-right-group {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-lg);
+        }
+
+        @media (max-width: 768px) {
+            .header-right-group {
+                gap: var(--spacing-md);
+            }
+            .main-navigation {
+                display: none;
+            }
+            .language-switcher {
+                margin-right: 32px;
+            }
+        }
 	</style>
 </head>
 
@@ -156,19 +306,25 @@
 					?>
 				</div>
 
-				<nav class="main-navigation" role="navigation">
-					<ul id="primary-menu">
-						<li><a href="<?php echo home_url('/reserver/'); ?>">Réservation</a></li>
-						<li><a href="https://instagram.com/lemargoeymet" target="_blank">Instagram</a></li>
-						<li><a href="mailto:contact@lemargo.fr">Mail</a></li>
-					</ul>
-				</nav>
+                <div class="header-right-group">
+                    <?php if (function_exists('the_language_switcher')) {
+                        the_language_switcher();
+                    } ?>
 
-				<button class="mobile-menu-toggle" aria-label="Menu" aria-expanded="false">
-					<span class="hamburger-line"></span>
-					<span class="hamburger-line"></span>
-					<span class="hamburger-line"></span>
-				</button>
+                    <nav class="main-navigation" role="navigation">
+                        <ul id="primary-menu">
+                            <li><a href="<?php echo home_url('/reserver/'); ?>"><?php _e('Réservation', 'le-margo'); ?></a></li>
+                            <li><a href="https://instagram.com/lemargoeymet" target="_blank"><?php _e('Instagram', 'le-margo'); ?></a></li>
+                            <li><a href="mailto:sasdamaeymet@gmail.com"><?php _e('Mail', 'le-margo'); ?></a></li>
+                        </ul>
+                    </nav>
+
+                    <button class="mobile-menu-toggle" aria-label="<?php _e('Menu', 'le-margo'); ?>" aria-expanded="false">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                    </button>
+                </div>
 			</div>
 		</div>
 	</header>

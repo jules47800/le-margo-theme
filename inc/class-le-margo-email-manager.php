@@ -20,7 +20,7 @@ class Le_Margo_Email_Manager {
         $this->restaurant_address = get_theme_mod('le_margo_restaurant_address', '6 avenue du 6 juin 1944, 24500 Eymet');
         $this->restaurant_phone = get_theme_mod('le_margo_restaurant_phone', '+33 5 53 63 80 80');
         $this->restaurant_url = home_url();
-        $this->restaurant_siret = get_theme_mod('le_margo_restaurant_siret', '123 456 789 00012');
+        $this->restaurant_siret = get_theme_mod('le_margo_restaurant_siret', '987 558 673');
     }
 
     public static function get_instance() {
@@ -171,6 +171,10 @@ class Le_Margo_Email_Manager {
         error_log("Réservation ID: {$reservation->id}");
         error_log("Client: {$reservation->customer_name} ({$reservation->customer_email})");
         
+        // Récupérer les options
+        $table_hold_time = get_option('le_margo_table_hold_time', 15);
+        $phone_number = $this->restaurant_phone;
+
         // --- Email au client ---
         $client_content = sprintf(
             '<h2>%s</h2>
@@ -182,13 +186,16 @@ class Le_Margo_Email_Manager {
                 <div class="detail-row"><span class="detail-label">%s</span> %s</div>
                 <div class="detail-row"><span class="detail-label">%s</span> %s</div>
             </div>
-            <p>%s</p>
+            <p style="background-color: #fef9e7; border-left: 4px solid #f7d358; padding: 15px; margin: 20px 0;">
+                <strong>%s</strong> %s<br><br>
+                %s
+            </p>
             <p>%s</p>
             <p class="legal-notice">%s</p>',
             __('Confirmation de votre réservation', 'le-margo'),
             __('Bonjour', 'le-margo'),
             esc_html($reservation->customer_name),
-            __('Nous avons le plaisir de confirmer votre réservation au restaurant Le Margo :', 'le-margo'),
+            __('Votre réservation a bien été confirmée.', 'le-margo'),
             __('Date :', 'le-margo'),
             date_i18n('l j F Y', strtotime($reservation->reservation_date)),
             __('Heure :', 'le-margo'),
@@ -197,7 +204,15 @@ class Le_Margo_Email_Manager {
             esc_html($reservation->people),
             __('Référence :', 'le-margo'),
             sprintf('RES-%06d', $reservation->id),
-            __('Nous avons hâte de vous accueillir ! En cas d\'empêchement, merci de nous prévenir au moins 24 heures à l\'avance.', 'le-margo'),
+            __('Merci de noter :', 'le-margo'),
+            sprintf(
+                __('la table est maintenue pendant %d minutes après l\'heure prévue. Après ce délai, elle pourra être réattribuée.', 'le-margo'),
+                $table_hold_time
+            ),
+            sprintf(
+                __('En cas d\'annulation, merci de nous contacter au : %s', 'le-margo'),
+                '<a href="tel:' . esc_attr(preg_replace('/[^0-9+]/', '', $phone_number)) . '" style="color: #333; text-decoration: underline;">' . esc_html($phone_number) . '</a>'
+            ),
             __('L\'équipe du Margo', 'le-margo'),
             __('Cette confirmation de réservation fait office de contrat entre vous et le restaurant. En cas de litige, elle pourra être utilisée comme preuve de réservation.', 'le-margo')
         );
@@ -246,7 +261,7 @@ class Le_Margo_Email_Manager {
             __('Heure', 'le-margo'),
             date_i18n('H:i', strtotime($reservation->reservation_time)),
             __('Service', 'le-margo'),
-            $reservation->meal_type === 'lunch' ? __('Déjeuner', 'le-margo') : __('Dîner', 'le-margo'),
+            __('Réservation', 'le-margo'),
             __('Nombre de personnes', 'le-margo'),
             esc_html($reservation->people),
             __('Notes', 'le-margo'),

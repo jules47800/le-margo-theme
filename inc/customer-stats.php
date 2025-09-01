@@ -10,84 +10,46 @@ function le_margo_update_customer_visits($customer_email, $reservation_id = null
     global $wpdb;
     $customers_table = $wpdb->prefix . 'customer_stats';
     $reservations_table = $wpdb->prefix . 'reservations';
-    
-    // Vérifier si le client existe déjà
-    $existing_customer = $wpdb->get_row($wpdb->prepare(
-        "SELECT * FROM $customers_table WHERE email = %s",
-        $customer_email
-    ));
-    
-    // Récupérer les consentements RGPD depuis la réservation
-    $consent_data_processing = 0;
-    $consent_data_storage = 0;
-    $customer_name = '';
-    
-    if ($reservation_id) {
-        $reservation = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM $reservations_table WHERE id = %d",
-            $reservation_id
-        ));
-        
-        if ($reservation) {
-            $consent_data_processing = isset($reservation->consent_data_processing) ? $reservation->consent_data_processing : 0;
-            $consent_data_storage = isset($reservation->consent_data_storage) ? $reservation->consent_data_storage : 0;
-            $customer_name = $reservation->customer_name;
-        }
-    }
-    
-    // Si pas de consentement au traitement des données, ne pas enregistrer les statistiques détaillées
-    if (!$consent_data_processing) {
+
+    if (empty($customer_email) || !is_email($customer_email)) {
         return;
     }
-    
-    if ($existing_customer) {
-        // Mettre à jour le nombre de visites et les consentements
-        $wpdb->update(
-            $customers_table,
-            array(
-                'visits' => $existing_customer->visits + 1,
-                'last_visit' => current_time('mysql'),
-                'last_reservation_id' => $reservation_id,
-                'consent_data_processing' => $consent_data_processing,
-                'consent_data_storage' => $consent_data_storage,
-                'consent_date' => ($consent_data_processing || $consent_data_storage) ? current_time('mysql') : $existing_customer->consent_date
-            ),
-            array('email' => $customer_email)
-        );
-    } else {
-        // Créer un nouveau client
-        $wpdb->insert(
-            $customers_table,
-            array(
-                'email' => $customer_email,
-                'name' => $customer_name,
-                'visits' => 1,
-                'first_visit' => current_time('mysql'),
-                'last_visit' => current_time('mysql'),
-                'last_reservation_id' => $reservation_id,
-                'consent_data_processing' => $consent_data_processing,
-                'consent_data_storage' => $consent_data_storage,
-                'consent_date' => ($consent_data_processing || $consent_data_storage) ? current_time('mysql') : null
-            )
-        );
-    }
-    
-    // Vérifier si le client est devenu VIP (plus de 5 visites)
-    $updated_customer = $wpdb->get_row($wpdb->prepare(
-        "SELECT * FROM $customers_table WHERE email = %s",
-        $customer_email
+
+    // Récupérer les données de la réservation pour le nom et les consentements
+    $reservation = $wpdb->get_row($wpdb->prepare(
+        "SELECT customer_name, consent_data_processing, consent_data_storage, accept_reminder, newsletter FROM $reservations_table WHERE id = %d",
+        $reservation_id
     ));
+    $customer_name = $reservation ? $reservation->customer_name : '';
     
-    if ($updated_customer && $updated_customer->visits >= 5 && $updated_customer->is_vip == 0) {
-        // Marquer comme VIP
-        $wpdb->update(
-            $customers_table,
-            array('is_vip' => 1),
-            array('email' => $customer_email)
-        );
-        
-        // Envoyer un email de félicitations
-        le_margo_send_vip_email($customer_email, $updated_customer->name);
+    // Insertion ou mise à jour en une seule requête
+    $wpdb->query($wpdb->prepare(
+        "INSERT INTO $customers_table (email, name, visits, first_visit, last_visit, last_reservation_id, is_vip, consent_data_processing, consent_data_storage, accept_reminder, newsletter, consent_date)
+         VALUES (%s, %s, 1, NOW(), NOW(), %d, 0, %d, %d, %d, %d, NOW())
+         ON DUPLICATE KEY UPDATE
+            name = VALUES(name),
+            visits = visits + 1,
+            last_visit = NOW(),
+            last_reservation_id = VALUES(last_reservation_id),
+            consent_data_processing = VALUES(consent_data_processing),
+            consent_data_storage = VALUES(consent_data_storage),
+            accept_reminder = VALUES(accept_reminder),
+            newsletter = VALUES(newsletter),
+            consent_date = NOW(),
+            is_vip = IF(visits >= 4, 1, is_vip)", // Le client devient VIP à la 5ème visite (4 + 1)
+        $customer_email,
+        $customer_name,
+        $reservation_id,
+        $reservation->consent_data_processing ?? 0,
+        $reservation->consent_data_storage ?? 0,
+        $reservation->accept_reminder ?? 0,
+        $reservation->newsletter ?? 0
+    ));
+
+    // Vérifier si le client vient de devenir VIP pour envoyer l'email
+    $customer = $wpdb->get_row($wpdb->prepare("SELECT visits, is_vip FROM $customers_table WHERE email = %s", $customer_email));
+    if ($customer && $customer->visits === 5 && $customer->is_vip == 1) {
+        le_margo_send_vip_email($customer_email, $customer_name);
     }
 }
 
@@ -153,7 +115,73 @@ function le_margo_get_global_customer_stats() {
 }
 
 /**
- * Récupérer la liste des clients VIP
+ * Force la resynchronisation des statistiques clients depuis les réservations
+ */
+function le_margo_resync_customer_stats() {
+    global $wpdb;
+    $customers_table = $wpdb->prefix . 'customer_stats';
+    $reservations_table = $wpdb->prefix . 'reservations';
+
+    // 1. Vider la table des statistiques pour repartir de zéro
+    $wpdb->query("TRUNCATE TABLE $customers_table");
+
+    // 2. Récupérer toutes les réservations valides, groupées par email
+    $reservations = $wpdb->get_results(
+        "SELECT * FROM $reservations_table 
+         WHERE customer_email IS NOT NULL AND customer_email != '' AND status IN ('confirmed', 'completed', 'no-show')
+         ORDER BY customer_email, reservation_date ASC, reservation_time ASC"
+    );
+
+    if (empty($reservations)) {
+        return; // Aucune réservation à traiter
+    }
+
+    // 3. Traiter chaque réservation pour reconstruire les stats
+    foreach ($reservations as $reservation) {
+        if (empty($reservation->customer_email) || !is_email($reservation->customer_email)) {
+            continue;
+        }
+        le_margo_update_customer_visits($reservation->customer_email, $reservation->id);
+    }
+}
+
+/**
+ * Mettre à jour la structure de la table customer_stats si nécessaire
+ */
+function le_margo_update_customer_stats_table_check() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'customer_stats';
+    $charset_collate = $wpdb->get_charset_collate();
+
+    // Structure de table attendue
+    $sql = "CREATE TABLE $table_name (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        email varchar(100) NOT NULL,
+        name varchar(100) NULL,
+        visits int(11) NOT NULL DEFAULT 0,
+        first_visit datetime NULL,
+        last_visit datetime NULL,
+        last_reservation_id bigint(20) NULL,
+        is_vip tinyint(1) NOT NULL DEFAULT 0,
+        consent_data_processing tinyint(1) NOT NULL DEFAULT 0,
+        consent_data_storage tinyint(1) NOT NULL DEFAULT 0,
+        accept_reminder tinyint(1) NOT NULL DEFAULT 0,
+        newsletter tinyint(1) NOT NULL DEFAULT 0,
+        consent_date datetime NULL,
+        notes text NULL,
+        PRIMARY KEY  (id),
+        UNIQUE KEY email (email),
+        KEY is_vip (is_vip)
+    ) $charset_collate;";
+
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+}
+add_action('admin_init', 'le_margo_update_customer_stats_table_check');
+
+
+/**
+ * Récupérer les clients VIP
  */
 function le_margo_get_vip_customers($limit = 10) {
     global $wpdb;
@@ -248,15 +276,11 @@ function le_margo_get_advanced_restaurant_stats($period = 'last_30_days', $custo
     // Stats par service (déjeuner vs dîner)
     $service_stats = $wpdb->get_results(
         "SELECT 
-            CASE 
-                WHEN CAST(reservation_time AS TIME) < '18:00:00' THEN 'lunch'
-                ELSE 'dinner'
-            END as meal_type,
+            'general' as meal_type,
             COUNT(*) as reservation_count,
             SUM(people) as total_guests
         FROM $reservations_table 
-        $where_clause
-        GROUP BY meal_type"
+        $where_clause"
     );
     
     // Taux d'occupation par jour
@@ -472,13 +496,7 @@ function le_margo_calculate_occupancy_data($start_date, $end_date) {
     foreach ($reservations as $res) {
         $date = $res->reservation_date;
         if (!isset($daily_covers[$date])) {
-            $daily_covers[$date] = ['lunch' => 0, 'dinner' => 0, 'total' => 0];
-        }
-        $is_dinner = strtotime($res->reservation_time) >= strtotime('18:00');
-        if ($is_dinner) {
-            $daily_covers[$date]['dinner'] += $res->people;
-        } else {
-            $daily_covers[$date]['lunch'] += $res->people;
+            $daily_covers[$date] = ['total' => 0];
         }
         $daily_covers[$date]['total'] += $res->people;
     }
@@ -493,76 +511,31 @@ function le_margo_calculate_occupancy_data($start_date, $end_date) {
 
         if (isset($daily_schedule[$day_key]) && $daily_schedule[$day_key]['open']) {
             $schedule = $daily_schedule[$day_key];
-            $total_slots_lunch = 0;
-            $total_slots_dinner = 0;
+            $total_slots = 0;
 
             foreach ($schedule['time_ranges'] as $range) {
                 $start = new DateTime($range['start']);
                 $end = new DateTime($range['end']);
                 $interval = new DateInterval('PT' . $schedule['slot_interval'] . 'M');
-                
-                $is_dinner_range = $start->format('H') >= 18;
 
                 $period = new DatePeriod($start, $interval, $end);
                 $slot_count = iterator_count($period);
-
-                if ($is_dinner_range) {
-                    $total_slots_dinner += $slot_count;
-                } else {
-                    $total_slots_lunch += $slot_count;
-                }
+                $total_slots += $slot_count;
             }
 
-            $capacity_lunch = $total_slots_lunch * $capacity_per_slot;
-            $capacity_dinner = $total_slots_dinner * $capacity_per_slot;
-            $total_capacity = $capacity_lunch + $capacity_dinner;
-
-            $covers = isset($daily_covers[$date_str]) ? $daily_covers[$date_str] : ['lunch' => 0, 'dinner' => 0, 'total' => 0];
+            $total_capacity = $total_slots * $capacity_per_slot;
+            $covers = isset($daily_covers[$date_str]) ? $daily_covers[$date_str] : ['total' => 0];
 
             $occupancy_data[$date_str] = [
-                'lunch' => $capacity_lunch > 0 ? round(($covers['lunch'] / $capacity_lunch) * 100) : 0,
-                'dinner' => $capacity_dinner > 0 ? round(($covers['dinner'] / $capacity_dinner) * 100) : 0,
                 'overall' => $total_capacity > 0 ? round(($covers['total'] / $total_capacity) * 100) : 0,
             ];
         } else {
             // Jour fermé
-            $occupancy_data[$date_str] = ['lunch' => 0, 'dinner' => 0, 'overall' => 0];
+            $occupancy_data[$date_str] = ['overall' => 0];
         }
 
         $current_date->modify('+1 day');
     }
 
     return $occupancy_data;
-}
-
-/**
- * Créer la table des statistiques clients
- */
-function le_margo_create_customer_stats_table() {
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'customer_stats';
-    
-    $charset_collate = $wpdb->get_charset_collate();
-    
-    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
-        id bigint(20) NOT NULL AUTO_INCREMENT,
-        email varchar(100) NOT NULL,
-        name varchar(100) NOT NULL,
-        visits int(11) NOT NULL DEFAULT 0,
-        first_visit datetime NOT NULL,
-        last_visit datetime NOT NULL,
-        last_reservation_id bigint(20) NULL,
-        is_vip tinyint(1) NOT NULL DEFAULT 0,
-        consent_data_processing tinyint(1) NOT NULL DEFAULT 0,
-        consent_data_storage tinyint(1) NOT NULL DEFAULT 0,
-        consent_date datetime NULL,
-        notes text NULL,
-        PRIMARY KEY  (id),
-        UNIQUE KEY email (email),
-        KEY is_vip (is_vip)
-    ) $charset_collate;";
-    
-    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-    dbDelta($sql);
-}
-add_action('after_switch_theme', 'le_margo_create_customer_stats_table'); 
+} 

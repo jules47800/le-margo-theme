@@ -161,3 +161,64 @@ Ajouter dans le footer :
 ---
 
 *Guide créé le 7 juin 2025 - À mettre à jour selon les évolutions* 
+
+# Guide des Meta Données SEO - Le Margo
+
+## Page d'Accueil (front-page.php)
+- **Meta Title**: "Le Margo | Bistrot Moderne à Eymet, Dordogne"
+- **Meta Description**: "Le Margo, bistrot moderne à Eymet où cuisine du marché rime avec convivialité. Une carte qui évolue au fil des saisons, des produits locaux et une ambiance chaleureuse."
+
+## Page À Propos (page-a-propos.php)
+- **Meta Title**: "À Propos du Margo | Bistrot Moderne & Cuisine de Saison"
+- **Meta Description**: "Découvrez l'histoire du Margo, bistrot moderne d'Eymet. Une cuisine sincère et généreuse, des producteurs locaux et une équipe passionnée vous accueillent en Dordogne."
+
+## Page Menus (page-menus.php)
+- **Meta Title**: "La Carte | Le Margo - Bistrot Moderne à Eymet"
+- **Meta Description**: "Notre carte bistronomique : produits frais du marché, poissons du jour, viandes maturées. Une cuisine sincère qui respecte les saisons, dans une ambiance décontractée."
+
+## Page Galerie (page-galerie.php)
+- **Meta Title**: "En Images | Le Margo - Bistrot Moderne Eymet"
+- **Meta Description**: "Découvrez l'ambiance du Margo en images : cuisine de bistrot revisitée, produits du marché, moments conviviaux. Un bistrot moderne qui cultive l'art de recevoir à Eymet."
+
+## Page Réservation (page-reserver.php)
+- **Meta Title**: "Réserver | Le Margo - Bistrot Moderne Eymet"
+- **Meta Description**: "Réservez votre table au Margo, bistrot moderne d'Eymet. Du mardi au samedi soir, venez partager un moment convivial autour d'une cuisine de bistrot créative."
+
+## Page Eymet (page-eymet.php)
+- **Meta Title**: "Le Margo à Eymet | Bistrot Moderne en Dordogne"
+- **Meta Description**: "Le Margo, votre bistrot moderne au cœur d'Eymet. Au 6 avenue du 6 juin 1944, savourez une cuisine de bistrot contemporaine dans un cadre chaleureux."
+
+## Archives Menu du Jour (archive-daily_menu.php)
+- **Meta Title**: "Le Menu du Jour | Bistrot Le Margo Eymet"
+- **Meta Description**: "Notre ardoise du jour : une cuisine de bistrot généreuse qui suit le marché. Des plats fait maison qui changent chaque jour selon les arrivages et la saison."
+
+## Archives Témoignages (archive-testimonial.php)
+- **Meta Title**: "Avis Clients | Bistrot Le Margo à Eymet"
+- **Meta Description**: "Les retours de nos clients sur leur expérience au Margo. Un bistrot moderne apprécié pour sa cuisine sincère et son ambiance conviviale au cœur d'Eymet."
+
+## Pages Légales
+### Politique de Confidentialité (page-politique-confidentialite.php)
+- **Meta Title**: "Politique de Confidentialité | Le Margo Eymet"
+- **Meta Description**: "Consultez notre politique de confidentialité. Le Margo s'engage à protéger vos données personnelles conformément à la réglementation en vigueur."
+
+### Suppression des Données (page-suppression-donnees.php)
+- **Meta Title**: "Suppression des Données | Le Margo Eymet"
+- **Meta Description**: "Informations sur la suppression de vos données personnelles au Margo. Nous respectons votre droit à la vie privée."
+
+## Page 404
+- **Meta Title**: "Page Non Trouvée | Le Margo - Bistrot Moderne Eymet"
+- **Meta Description**: "La page que vous recherchez n'existe plus. Découvrez notre carte bistronomique et nos suggestions du jour sur le site du Margo à Eymet."
+
+---
+
+### Notes d'Utilisation
+- Ces meta données sont optimisées pour le référencement local et la bistronomie
+- Chaque meta title est limité à 60 caractères maximum
+- Chaque meta description est limitée à 155-160 caractères
+- Les mots-clés principaux sont : bistrot moderne, cuisine de saison, Eymet, Dordogne, Le Margo
+- L'accent est mis sur :
+  - La cuisine de bistrot contemporaine
+  - Les produits frais du marché
+  - L'ambiance conviviale et décontractée
+  - Le respect des saisons
+  - La proximité avec les producteurs locaux 

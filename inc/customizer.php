@@ -23,6 +23,61 @@ function le_margo_customize_register($wp_customize) {
         'description' => __('Gérez ici les couleurs principales du site.', 'le-margo'),
     ));
 
+    // Section Informations du Restaurant
+    $wp_customize->add_section('le_margo_restaurant_info_section', array(
+        'title'      => __('Informations du Restaurant', 'le-margo'),
+        'priority'   => 25,
+        'description' => __('Gérez ici les informations principales du restaurant.', 'le-margo'),
+    ));
+
+    // Nom du restaurant
+    $wp_customize->add_setting('le_margo_restaurant_name', array(
+        'default'   => 'Le Margo',
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+    $wp_customize->add_control('le_margo_restaurant_name_control', array(
+        'label'    => __('Nom du Restaurant', 'le-margo'),
+        'section'  => 'le_margo_restaurant_info_section',
+        'settings' => 'le_margo_restaurant_name',
+        'type'     => 'text',
+    ));
+
+    // Téléphone
+    $wp_customize->add_setting('le_margo_restaurant_phone', array(
+        'default'   => '05 53 00 00 00',
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+    $wp_customize->add_control('le_margo_restaurant_phone_control', array(
+        'label'    => __('Numéro de Téléphone', 'le-margo'),
+        'section'  => 'le_margo_restaurant_info_section',
+        'settings' => 'le_margo_restaurant_phone',
+        'type'     => 'text',
+    ));
+
+    // Adresse
+    $wp_customize->add_setting('le_margo_restaurant_address', array(
+        'default'   => '6 avenue du 6 juin 1944, 24500 Eymet',
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+    $wp_customize->add_control('le_margo_restaurant_address_control', array(
+        'label'    => __('Adresse', 'le-margo'),
+        'section'  => 'le_margo_restaurant_info_section',
+        'settings' => 'le_margo_restaurant_address',
+        'type'     => 'textarea',
+    ));
+
+    // SIRET
+    $wp_customize->add_setting('le_margo_restaurant_siret', array(
+        'default'   => '987 558 673',
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+    $wp_customize->add_control('le_margo_restaurant_siret_control', array(
+        'label'    => __('Numéro SIRET', 'le-margo'),
+        'section'  => 'le_margo_restaurant_info_section',
+        'settings' => 'le_margo_restaurant_siret',
+        'type'     => 'text',
+    ));
+
     // Liste des couleurs à ajouter
     $colors = array(
         '--color-black'       => array('label' => __('Couleur Texte Principal', 'le-margo'), 'default' => '#1a1a1a'),

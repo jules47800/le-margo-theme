@@ -56,15 +56,15 @@ if (!class_exists('Le_Margo_Reservation_Manager')) {
                 return false;
             }
 
-            // Vérifier le délai de 2 heures SEULEMENT pour le public
+            // Vérifier le délai de 1 heure SEULEMENT pour le public
             if ($source !== 'admin') {
                 try {
                     $reservation_datetime = new DateTime("$date $time", new DateTimeZone('Europe/Paris'));
                     $min_booking_time = new DateTime('now', new DateTimeZone('Europe/Paris'));
-                    $min_booking_time->modify('+2 hours');
+                    $min_booking_time->modify('+1 hour');
 
                     if ($reservation_datetime < $min_booking_time) {
-                        error_log("ERREUR DISPO: La réservation est dans moins de 2 heures (source: $source).");
+                        error_log("ERREUR DISPO: La réservation est dans moins de 1 heure (source: $source).");
                         return false;
                     }
                 } catch (Exception $e) { 
@@ -175,51 +175,55 @@ if (!class_exists('Le_Margo_Reservation_Manager')) {
         }
 
         public function send_confirmation_email($reservation_id) {
-            error_log("=== ENVOI EMAIL DE CONFIRMATION ===");
-            error_log("ID réservation: $reservation_id");
+            error_log("=== DÉBUT ENVOI EMAIL DE CONFIRMATION (ID: $reservation_id) ===");
             
             $reservation = $this->get_reservation($reservation_id);
             if (!$reservation) {
-                error_log("ERREUR: Réservation introuvable avec l'ID $reservation_id");
+                error_log("ERREUR: Réservation introuvable.");
                 return false;
+            }
+            
+            // NOUVEAU : Vérifier si un email a déjà été envoyé
+            if ($reservation->confirmation_email_sent == 1) {
+                error_log("INFO: Email de confirmation déjà envoyé pour la réservation ID $reservation_id. Annulation de l'envoi.");
+                return true; // On considère l'opération comme un succès pour ne pas bloquer le flux
             }
             
             error_log("Réservation trouvée - Client: {$reservation->customer_name}, Email: {$reservation->customer_email}");
             
-            // Vérifier si l'email manager existe
             if (!function_exists('le_margo_get_email_manager')) {
-                error_log("ERREUR: Fonction le_margo_get_email_manager non disponible");
+                error_log("ERREUR: La fonction le_margo_get_email_manager n'existe pas.");
                 return false;
             }
             
             $email_manager = le_margo_get_email_manager();
             if (!$email_manager) {
-                error_log("ERREUR: Impossible d'obtenir l'instance de l'email manager");
+                error_log("ERREUR: Impossible d'obtenir l'instance du gestionnaire d'emails.");
                 return false;
             }
             
-            error_log("Email manager obtenu, tentative d'envoi...");
+            error_log("Gestionnaire d'emails obtenu, tentative d'envoi...");
             
             try {
                 $sent = $email_manager->send_reservation_confirmation($reservation);
-                error_log("Résultat envoi email: " . ($sent ? 'SUCCÈS' : 'ÉCHEC'));
+                error_log("Résultat de l'envoi: " . ($sent ? 'SUCCÈS' : 'ÉCHEC'));
                 
                 if ($sent) {
                     $update_result = $this->update_reservation($reservation_id, array('confirmation_email_sent' => 1));
-                    error_log("Mise à jour flag confirmation_email_sent: " . ($update_result ? 'SUCCÈS' : 'ÉCHEC'));
+                    if (!$update_result) {
+                        error_log("ALERTE: Échec de la mise à jour du statut 'confirmation_email_sent' pour la réservation ID $reservation_id.");
+                    }
                 } else {
-                    error_log("ATTENTION: L'envoi d'email a échoué");
-                    // Vérifier les logs d'erreur SMTP
-                    error_log("Vérifiez le fichier " . WP_CONTENT_DIR . "/email-debug.log pour plus de détails");
+                    error_log("ATTENTION: L'envoi de l'email a échoué. Consulter les logs pour plus de détails.");
                 }
                 
-                error_log("=== FIN ENVOI EMAIL DE CONFIRMATION ===");
+                error_log("=== FIN ENVOI EMAIL DE CONFIRMATION (ID: $reservation_id) ===");
                 return $sent;
                 
             } catch (Exception $e) {
-                error_log("EXCEPTION lors de l'envoi d'email: " . $e->getMessage());
+                error_log("EXCEPTION lors de l'envoi: " . $e->getMessage());
                 error_log("Stack trace: " . $e->getTraceAsString());
-                error_log("=== FIN ENVOI EMAIL DE CONFIRMATION (ÉCHEC) ===");
+                error_log("=== FIN ENVOI EMAIL DE CONFIRMATION (ID: $reservation_id, AVEC ERREUR) ===");
                 return false;
             }
         }

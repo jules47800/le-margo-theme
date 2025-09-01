@@ -1,0 +1,179 @@
+{
+    "ameliorations_prioritaires": {
+        "securite": [
+            {
+                "id": "SEC-001",
+                "titre": "Renforcement de la sécurité des emails",
+                "description": "Mettre en place une authentification plus robuste pour les emails SMTP",
+                "priorite": "haute",
+                "statut": "a_faire"
+            },
+            {
+                "id": "SEC-002",
+                "titre": "Protection contre les attaques CSRF",
+                "description": "Ajouter des nonces supplémentaires pour les actions sensibles",
+                "priorite": "haute",
+                "statut": "a_faire"
+            }
+        ],
+        "performance": [
+            {
+                "id": "PERF-001",
+                "titre": "Optimisation des images",
+                "description": "Mettre en place un système de lazy loading et d'optimisation automatique des images",
+                "priorite": "moyenne",
+                "statut": "a_faire"
+            },
+            {
+                "id": "PERF-002",
+                "titre": "Mise en cache",
+                "description": "Implémenter un système de cache pour les pages statiques",
+                "priorite": "moyenne",
+                "statut": "a_faire"
+            }
+        ]
+    },
+    "ameliorations_fonctionnelles": {
+        "reservations": [
+            {
+                "id": "RES-001",
+                "titre": "Système de rappels SMS",
+                "description": "Ajouter l'option d'envoi de rappels par SMS pour les réservations",
+                "priorite": "moyenne",
+                "statut": "a_faire"
+            },
+            {
+                "id": "RES-002",
+                "titre": "Gestion des annulations",
+                "description": "Créer un système permettant aux clients d'annuler leurs réservations",
+                "priorite": "haute",
+                "statut": "a_faire"
+            },
+            {
+                "id": "RES-003",
+                "titre": "Système de liste d'attente",
+                "description": "Mettre en place une liste d'attente pour les créneaux complets",
+                "priorite": "moyenne",
+                "statut": "a_faire"
+            }
+        ],
+        "interface_utilisateur": [
+            {
+                "id": "UI-001",
+                "titre": "Responsive design amélioré",
+                "description": "Optimiser l'affichage sur les appareils mobiles",
+                "priorite": "haute",
+                "statut": "a_faire"
+            },
+            {
+                "id": "UI-002",
+                "titre": "Animations et transitions",
+                "description": "Ajouter des animations fluides pour améliorer l'expérience utilisateur",
+                "priorite": "basse",
+                "statut": "a_faire"
+            }
+        ]
+    },
+    "ameliorations_techniques": {
+        "code": [
+            {
+                "id": "CODE-001",
+                "titre": "Refactoring du code JavaScript",
+                "description": "Restructurer le code JavaScript pour une meilleure maintenabilité",
+                "priorite": "moyenne",
+                "statut": "a_faire"
+            },
+            {
+                "id": "CODE-002",
+                "titre": "Documentation du code",
+                "description": "Ajouter des commentaires et une documentation complète",
+                "priorite": "moyenne",
+                "statut": "a_faire"
+            }
+        ],
+        "architecture": [
+            {
+                "id": "ARCH-001",
+                "titre": "Modularisation",
+                "description": "Restructurer le code en modules plus petits et réutilisables",
+                "priorite": "moyenne",
+                "statut": "a_faire"
+            },
+            {
+                "id": "ARCH-002",
+                "titre": "API REST",
+                "description": "Créer une API REST pour les futures extensions",
+                "priorite": "basse",
+                "statut": "a_faire"
+            }
+        ]
+    },
+    "ameliorations_metier": {
+        "marketing": [
+            {
+                "id": "MKT-001",
+                "titre": "Intégration réseaux sociaux",
+                "description": "Ajouter des boutons de partage et une galerie Instagram",
+                "priorite": "moyenne",
+                "statut": "a_faire"
+            },
+            {
+                "id": "MKT-002",
+                "titre": "Système de fidélité",
+                "description": "Mettre en place un programme de fidélité pour les clients réguliers",
+                "priorite": "basse",
+                "statut": "a_faire"
+            }
+        ],
+        "analytics": [
+            {
+                "id": "ANA-001",
+                "titre": "Suivi des conversions",
+                "description": "Mettre en place un suivi détaillé des réservations",
+                "priorite": "moyenne",
+                "statut": "a_faire"
+            },
+            {
+                "id": "ANA-002",
+                "titre": "Tableau de bord",
+                "description": "Créer un tableau de bord pour suivre les KPIs",
+                "priorite": "basse",
+                "statut": "a_faire"
+            }
+        ]
+    },
+    "maintenance": {
+        "mises_a_jour": [
+            {
+                "id": "MAJ-001",
+                "titre": "Mise à jour des dépendances",
+                "description": "Mettre à jour toutes les bibliothèques et plugins",
+                "priorite": "haute",
+                "statut": "a_faire"
+            },
+            {
+                "id": "MAJ-002",
+                "titre": "Tests automatisés",
+                "description": "Mettre en place des tests unitaires et d'intégration",
+                "priorite": "moyenne",
+                "statut": "a_faire"
+            }
+        ],
+        "optimisation": [
+            {
+                "id": "OPT-001",
+                "titre": "Nettoyage de la base de données",
+                "description": "Optimiser et nettoyer régulièrement la base de données",
+                "priorite": "moyenne",
+                "statut": "a_faire"
+            },
+            {
+                "id": "OPT-002",
+                "titre": "Sauvegardes automatiques",
+                "description": "Mettre en place un système de sauvegarde automatique",
+                "priorite": "haute",
+                "statut": "a_faire"
+            }
+        ]
+    }
+} 

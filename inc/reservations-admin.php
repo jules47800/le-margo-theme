@@ -52,6 +52,12 @@ function le_margo_register_reservation_settings() {
         'default' => 90,
         'sanitize_callback' => 'absint',
     ]);
+
+    register_setting('le_margo_reservation_settings', 'le_margo_table_hold_time', [
+        'type' => 'integer',
+        'default' => 15,
+        'sanitize_callback' => 'absint',
+    ]);
     
     // NOUVEAU : Périodes de fermeture (vacances)
     register_setting('le_margo_reservation_settings', 'le_margo_holiday_dates', [
@@ -253,6 +259,16 @@ function le_margo_reservation_settings_page() {
                         <input type="number" id="le_margo_reminder_time" name="le_margo_reminder_time" 
                                value="<?php echo esc_attr(get_option('le_margo_reminder_time', 90)); ?>" min="30" max="1440" step="30">
                         <p class="field-help"><?php echo esc_html__('Par défaut: 90 minutes (1h30)', 'le-margo'); ?></p>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2><?php echo esc_html__('Politique de réservation', 'le-margo'); ?></h2>
+                    <div class="form-field">
+                        <label for="le_margo_table_hold_time"><?php echo esc_html__('Temps de maintien de la table (minutes)', 'le-margo'); ?></label>
+                        <input type="number" id="le_margo_table_hold_time" name="le_margo_table_hold_time"
+                               value="<?php echo esc_attr(get_option('le_margo_table_hold_time', 15)); ?>" min="5" max="60" step="5">
+                        <p class="field-help"><?php echo esc_html__('Durée après laquelle une table non occupée peut être réattribuée. Par défaut : 15 minutes.', 'le-margo'); ?></p>
                     </div>
                 </div>
 
@@ -584,13 +600,26 @@ function le_margo_reservations_page() {
                 'customer_email' => $customer_email,
                 'notes' => sanitize_textarea_field($_POST['notes']),
                 'status' => 'confirmed',
-                'meal_type' => 'general' // Ajout du type de repas manquant
+                'source' => 'admin', // Ajout de la source
+                'meal_type' => 'general',
+                'confirmation_email_sent' => 0, // Initialiser à non envoyé
             );
 
             $reservation_id = $reservation_manager->create_reservation($data);
 
             if ($reservation_id) {
-                 add_settings_error('le_margo_reservations', 'reservation_added', __('Réservation ajoutée avec succès.', 'le-margo'), 'success');
+                add_settings_error('le_margo_reservations', 'reservation_added', __('Réservation ajoutée avec succès.', 'le-margo'), 'success');
+                
+                // Envoyer l'email de confirmation si un email est fourni
+                if ($customer_email && function_exists('le_margo_get_email_manager')) {
+                    $email_sent = $reservation_manager->send_confirmation_email($reservation_id);
+                    if ($email_sent) {
+                        add_settings_error('le_margo_reservations', 'email_sent', __('Email de confirmation envoyé.', 'le-margo'), 'success');
+                    } else {
+                        add_settings_error('le_margo_reservations', 'email_error', __("La réservation a été créée, mais l'email de confirmation n'a pas pu être envoyé.", 'le-margo'), 'warning');
+                    }
+                }
+
                 if(function_exists('le_margo_update_customer_visits') && !empty($data['customer_email'])) {
                     le_margo_update_customer_visits($data['customer_email'], $reservation_id);
                 }
@@ -636,13 +665,7 @@ function le_margo_reservations_page() {
         $where_sql = " WHERE " . implode(' AND ', $where_clauses);
     }
 
-    // 3. Logique "Aller à aujourd'hui" : uniquement si aucun filtre n'est appliqué et si on n'est pas déjà sur une page spécifique
-    $is_filtered = !empty($search_query) || !empty($date_filter) || !empty($status_filter);
-    if (!$is_filtered && !isset($_GET['paged'])) {
-        // Compter les réservations passées pour déterminer la page de départ
-        $past_reservations_count = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(id) FROM $table_name WHERE reservation_date < %s", $today));
-        $current_page = floor($past_reservations_count / $items_per_page) + 1;
-    }
+    // L'ancien système de saut de page est supprimé car le nouveau tri affiche directement les réservations du jour en premier.
     
     // 4. Récupérer les données pour le tableau
     // Obtenir le nombre total d'éléments correspondant aux filtres pour la pagination
@@ -652,7 +675,22 @@ function le_margo_reservations_page() {
     // Calculer l'offset et récupérer les réservations pour la page actuelle
     $offset = ($current_page - 1) * $items_per_page;
     $reservations_query = $wpdb->prepare(
-        "SELECT * FROM $table_name" . $where_sql . " ORDER BY reservation_date ASC, reservation_time ASC LIMIT %d OFFSET %d",
+        "SELECT * FROM $table_name" . $where_sql . " 
+         ORDER BY 
+            -- 1. Grouper par futur/passé. 0 pour futur/aujourd'hui, 1 pour passé.
+            CASE WHEN reservation_date >= %s THEN 0 ELSE 1 END ASC,
+            -- 2. Pour le futur, trier par date/heure ASC.
+            CASE WHEN reservation_date >= %s THEN reservation_date END ASC,
+            CASE WHEN reservation_date >= %s THEN reservation_time END ASC,
+            -- 3. Pour le passé, trier par date/heure DESC (plus récent en premier).
+            CASE WHEN reservation_date < %s THEN reservation_date END DESC,
+            CASE WHEN reservation_date < %s THEN reservation_time END DESC
+         LIMIT %d OFFSET %d",
+        $today,
+        $today,
+        $today,
+        $today,
+        $today,
         $items_per_page,
         $offset
     );
@@ -661,11 +699,20 @@ function le_margo_reservations_page() {
     // Calculer le nombre total de pages
     $total_pages = ceil($total_items / $items_per_page);
 
-    // -- FIN DE LA NOUVELLE LOGIQUE --
-    
-    $today_reservations_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE reservation_date = %s", $today));
-    $pending_reservations_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE status = %s", 'pending'));
-    $restaurant_capacity = get_option('le_margo_restaurant_capacity', 4);
+    // -- Calcul des statistiques simplifiées et pertinentes --
+    $today_covers_count = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT SUM(people) FROM $table_name WHERE reservation_date = %s AND status = 'confirmed'", 
+        $today
+    ));
+    $pending_reservations_count = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(id) FROM $table_name WHERE status = 'pending' AND reservation_date >= %s", 
+        $today
+    ));
+    $next_week_covers_count = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT SUM(people) FROM $table_name WHERE status = 'confirmed' AND reservation_date BETWEEN %s AND %s",
+        $today,
+        date('Y-m-d', strtotime('+6 days'))
+    ));
     
     settings_errors('le_margo_reservations');
     ?>
@@ -673,12 +720,12 @@ function le_margo_reservations_page() {
         <h1><?php echo esc_html__('Gestion des réservations', 'le-margo'); ?></h1>
         
         <div class="reservation-stats" id="dashboard-widgets">
-            <a href="<?php echo esc_url(admin_url('admin.php?page=le-margo-reservations&view=day&date_filter=' . $today . '#reservations-list')); ?>" class="stat-box stat-box-clickable" data-has-items="<?php echo $today_reservations_count > 0 ? 'true' : 'false'; ?>">
-                <div class="stat-icon"><span class="dashicons dashicons-calendar"></span></div>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=le-margo-reservations&date_filter=' . $today . '&status_filter=confirmed#reservations-list')); ?>" class="stat-box stat-box-clickable" data-has-items="<?php echo $today_covers_count > 0 ? 'true' : 'false'; ?>">
+                <div class="stat-icon"><span class="dashicons dashicons-food"></span></div>
                 <div class="stat-content">
-                    <h3><?php echo esc_html__('Aujourd\'hui', 'le-margo'); ?></h3>
-                    <p class="stat-number"><?php echo esc_html($today_reservations_count); ?></p>
-                    <p class="stat-label"><?php echo esc_html__('réservations', 'le-margo'); ?></p>
+                    <h3><?php echo esc_html__('Couverts ce jour', 'le-margo'); ?></h3>
+                    <p class="stat-number"><?php echo esc_html($today_covers_count); ?></p>
+                    <p class="stat-label"><?php echo esc_html__('Confirmés', 'le-margo'); ?></p>
                 </div>
             </a>
             <a href="<?php echo esc_url(admin_url('admin.php?page=le-margo-reservations&status_filter=pending#reservations-list')); ?>" class="stat-box stat-box-clickable" data-has-items="<?php echo $pending_reservations_count > 0 ? 'true' : 'false'; ?>">
@@ -686,15 +733,15 @@ function le_margo_reservations_page() {
                 <div class="stat-content">
                     <h3><?php echo esc_html__('En attente', 'le-margo'); ?></h3>
                     <p class="stat-number"><?php echo esc_html($pending_reservations_count); ?></p>
-                    <p class="stat-label"><?php echo esc_html__('à confirmer', 'le-margo'); ?></p>
+                    <p class="stat-label"><?php echo esc_html__('Aujourd\'hui & à venir', 'le-margo'); ?></p>
                 </div>
             </a>
             <div class="stat-box">
-                <div class="stat-icon"><span class="dashicons dashicons-admin-users"></span></div>
+                <div class="stat-icon"><span class="dashicons dashicons-chart-bar"></span></div>
                 <div class="stat-content">
-                    <h3><?php echo esc_html__('Capacité', 'le-margo'); ?></h3>
-                    <p class="stat-number"><?php echo esc_html($restaurant_capacity); ?></p>
-                    <p class="stat-label"><?php echo esc_html__('couverts/créneau', 'le-margo'); ?></p>
+                    <h3><?php echo esc_html__('Couverts (7 jours)', 'le-margo'); ?></h3>
+                    <p class="stat-number"><?php echo esc_html($next_week_covers_count); ?></p>
+                    <p class="stat-label"><?php echo esc_html__('Prévisionnel', 'le-margo'); ?></p>
                 </div>
             </div>
         </div>
@@ -786,26 +833,34 @@ function le_margo_reservations_page() {
                                 if (isset($_GET['id']) && intval($_GET['id']) === $reservation->id) {
                                     $row_class .= ' reservation-action-executed';
                                 }
+                                if (isset($reservation->source) && $reservation->source === 'admin') {
+                                    $row_class .= ' admin-reservation';
+                                }
                                 ?>
                                 <tr class="<?php echo esc_attr($row_class); ?>">
-                                    <td class="column-id"><?php echo esc_html($reservation->id); ?></td>
-                                    <td class="column-date"><div class="date-info"><span class="date-display"><?php echo esc_html($date_obj->format('d/m/Y')); ?></span><span class="day-label"><?php echo esc_html($date_obj->format('D')); ?></span></div></td>
-                                    <td class="column-time"><?php echo esc_html(date('H:i', strtotime($reservation->reservation_time))); ?></td>
-                                    <td class="column-people"><span class="people-count"><?php echo esc_html($reservation->people); ?></span></td>
-                                    <td class="column-customer">
+                                    <td class="column-id" data-label="<?php echo esc_attr__('ID', 'le-margo'); ?>"><?php echo esc_html($reservation->id); ?></td>
+                                    <td class="column-date" data-label="<?php echo esc_attr__('Date', 'le-margo'); ?>"><div class="date-info"><span class="date-display"><?php echo esc_html($date_obj->format('d/m/Y')); ?></span><span class="day-label"><?php echo esc_html($date_obj->format('D')); ?></span></div></td>
+                                    <td class="column-time" data-label="<?php echo esc_attr__('Heure', 'le-margo'); ?>"><?php echo esc_html(date('H:i', strtotime($reservation->reservation_time))); ?></td>
+                                    <td class="column-people" data-label="<?php echo esc_attr__('Personnes', 'le-margo'); ?>"><span class="people-count"><?php echo esc_html($reservation->people); ?></span></td>
+                                    <td class="column-customer" data-label="<?php echo esc_attr__('Client', 'le-margo'); ?>">
                                         <div class="customer-info">
                                             <div class="customer-name"><?php echo esc_html($reservation->customer_name); ?></div>
                                             <?php if (!empty($reservation->customer_email)) : ?><a href="mailto:<?php echo esc_attr($reservation->customer_email); ?>" class="customer-email"><span class="dashicons dashicons-email"></span><?php echo esc_html($reservation->customer_email); ?></a><?php endif; ?>
                                             <?php if (!empty($reservation->customer_phone)) : ?><a href="tel:<?php echo esc_attr(preg_replace('/[^0-9+]/', '', $reservation->customer_phone)); ?>" class="customer-phone"><span class="dashicons dashicons-phone"></span><?php echo esc_html($reservation->customer_phone); ?></a><?php endif; ?>
                                         </div>
                                     </td>
-                                    <td class="column-status"><span class="status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_label); ?></span></td>
-                                    <td class="column-notes">
+                                    <td class="column-status" data-label="<?php echo esc_attr__('Statut', 'le-margo'); ?>"><span class="status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_label); ?></span></td>
+                                    <td class="column-notes" data-label="<?php echo esc_attr__('Notes', 'le-margo'); ?>">
                                         <?php if (!empty($reservation->notes)) : ?>
-                                            <div class="note-tooltip" title="<?php echo esc_attr($reservation->notes); ?>"><span class="dashicons dashicons-admin-comments"></span><span class="tooltip-text"><?php echo esc_html($reservation->notes); ?></span></div>
+                                            <div class="notes-content">
+                                                <span class="notes-icon dashicons dashicons-admin-comments"></span>
+                                                <span class="notes-text"><?php echo esc_html($reservation->notes); ?></span>
+                                            </div>
+                                        <?php else : ?>
+                                            <span class="no-notes">—</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="column-actions">
+                                    <td class="column-actions" data-label="<?php echo esc_attr__('Actions', 'le-margo'); ?>">
                                         <div class="action-buttons">
                                             <?php if ($reservation->status === 'pending') : ?>
                                                 <a href="<?php echo le_margo_get_action_url('confirm', $reservation->id, $date_filter, $status_filter); ?>" class="button action-button confirm-button" title="<?php echo esc_attr__('Confirmer', 'le-margo'); ?>"><span class="dashicons dashicons-yes"></span></a>

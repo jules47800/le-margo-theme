@@ -465,7 +465,13 @@
     // ÉDITION DE RÉSERVATION (MODAL)
     // ================================
     function initEditReservation() {
-        $(document).on('click', '.edit-button', function() {
+        $(document).on('click', '.edit-button', function(e) {
+            const id = $(this).data('reservation-id');
+            openEditModal(id);
+        });
+        // Support tactile (iPad/tablette)
+        $(document).on('touchend', '.edit-button', function(e) {
+            e.preventDefault();
             const id = $(this).data('reservation-id');
             openEditModal(id);
         });
@@ -609,5 +615,12 @@
     function closeModal() {
         $('#le-margo-edit-modal').fadeOut(100);
     }
+
+    // Fiabiliser les taps sur les autres boutons d'action (liens)
+    $(document).on('touchend', '.reservations-table .action-buttons a', function(e) {
+        // Déclenche le click natif (préserve les onclick confirm(...))
+        try { this.click(); } catch(_e) {}
+        e.preventDefault();
+    });
 
 })(jQuery); 

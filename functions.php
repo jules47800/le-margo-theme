@@ -10,7 +10,7 @@ if (function_exists('opcache_reset')) {
 
 if (!defined('_LE_MARGO_VERSION')) {
     // Remplacer le numéro de version à chaque mise à jour
-    define('_LE_MARGO_VERSION', '1.0.0');
+    define('_LE_MARGO_VERSION', '1.0.1');
 }
 
 // Définir la constante sans underscore pour la compatibilité

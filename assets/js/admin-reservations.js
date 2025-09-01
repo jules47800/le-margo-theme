@@ -618,9 +618,11 @@
 
     // Fiabiliser les taps sur les autres boutons d'action (liens)
     $(document).on('touchend', '.reservations-table .action-buttons a', function(e) {
-        // Déclenche le click natif (préserve les onclick confirm(...))
-        try { this.click(); } catch(_e) {}
-        e.preventDefault();
+        // Laisser le navigateur générer le click synthétique par défaut (pas de preventDefault)
+        // Pour certains navigateurs, déclencher un click sans bloquer la navigation
+        if (!e.defaultPrevented && this && typeof this.click === 'function') {
+            try { this.click(); } catch(_e) {}
+        }
     });
 
 })(jQuery); 
